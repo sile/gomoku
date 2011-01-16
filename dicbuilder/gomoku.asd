@@ -10,4 +10,6 @@
   
   :components ((:file "package")
                (:file "util")
+               (:file "trie/code-stream")
+               (:file "trie/trie")
                (:file "gomoku")))

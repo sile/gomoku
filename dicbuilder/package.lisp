@@ -1,6 +1,6 @@
 (defpackage gomoku
   (:use :common-lisp)
-  (:export ))
+  (:export :build-dic))
 (in-package :gomoku)
 
 (deftype octet () '(unsigned-byte 8))

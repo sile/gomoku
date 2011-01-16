@@ -84,4 +84,11 @@
         (write-int category-id out :width 1)
         (write-int mask out :width 2))))
   'done)
-    
+
+(defun build-dic (text-dic-dir output-dir)
+  (let ((*default-pathname-defaults* (probe-file text-dic-dir)))
+    (build-matrix #P"matrix.def" (concatenate 'string  output-dir"matrix.bin"))
+    (build-pos-data #P"left-id.def" (concatenate 'string output-dir"pos.bin"))
+    (build-char-category #P"char.def" (concatenate 'string output-dir"category.bin"))
+    (build-code-category #P"char.def" (concatenate 'string output-dir"code.bin")))
+  'done)
