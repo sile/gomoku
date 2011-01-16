@@ -60,9 +60,10 @@
                         (set-chck da base-idx (trie::node-label child))
                         memo)))))))
 
-(defun from-trie (trie output)
-  (let ((da (init-da (node-count-limit trie))))
-    ;; build-impl
+(defun from-trie (trie output &aux (limit (node-count-limit trie)))
+  (let ((da (init-da limit)))
+    (build-impl trie (node-allocator:make limit) da 0 
+                (make-hash-table :test #'eq))
     (with-slots (base chck opts) da
       (with-open-file (out output :direction :output 
                            :if-exists :supersede

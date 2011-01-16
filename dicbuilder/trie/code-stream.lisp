@@ -44,7 +44,7 @@
     (eat in)))
 
 (defun init-code-mapping (source-file)
-  (let ((map (make-array #x10000 :initial-element -1)))
+  (let ((map (make-array #x10000 :initial-element 0)))
     (with-open-file (in source-file)
       (loop FOR line = (read-line in nil nil)
             WHILE line
@@ -53,7 +53,7 @@
           DO
           (setf (aref map (char-code c)) 0))))
     
-    (loop WITH cd = -1
+    (loop WITH cd = 0
           FOR i FROM 0 BELOW (length map)
           WHEN (zerop (aref map i))
       DO
