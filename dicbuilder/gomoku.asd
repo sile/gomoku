@@ -12,4 +12,5 @@
                (:file "util")
                (:file "trie/code-stream")
                (:file "trie/trie")
+               (:file "trie/double-array")
                (:file "gomoku")))
