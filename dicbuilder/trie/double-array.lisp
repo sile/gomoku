@@ -8,6 +8,12 @@
   (chck #() :type (simple-array (unsigned-byte 16)))
   (opts #() :type (simple-array (unsigned-byte 32))))
 
+(defmacro a.if (exp then else)
+  `(let ((it ,exp))
+     (if it
+         ,then
+       ,else)))
+
 ;; XXX:
 (defun node-count (da)
   (length (da-base da)))
@@ -25,6 +31,34 @@
   (make-da :base (make-array node-count-limit :element-type '(unsigned-byte 32) :initial-element 0)
            :chck (make-array node-count-limit :element-type '(unsigned-byte 16) :initial-element 0)
            :opts (make-array node-count-limit :element-type '(unsigned-byte 32) :initial-element 0)))
+
+(defun set-opts (da node-idx options)
+  (setf (aref (da-opts da) node-idx) options))
+
+(defun set-chck (da base-idx arc &aux (next-idx (+ base-idx arc)))
+  (setf (aref (da-chck da) next-idx) arc)
+  next-idx)
+
+(defun set-base (da node-idx base-idx)
+  (setf (aref (da-base da) node-idx) base-idx))
+
+(defun build-impl (trie alloca da node-idx memo)
+  (a.if #1=(gethash (trie::node-child trie) memo)
+        (progn 
+          (set-opts da node-idx (trie::node-options trie))
+          (set-base da node-idx it))
+    (let ((children (trie::collect-children trie)))
+      (set-opts da node-idx (trie::node-options trie))
+      (when children
+        (let ((base-idx (node-allocator:allocate 
+                         alloca
+                         (mapcar #'trie::node-label children))))
+          (setf #1# base-idx)
+          (set-base da node-idx base-idx)
+          (dolist (child children)
+            (build-impl child alloca da
+                        (set-chck da base-idx (trie::node-label child))
+                        memo)))))))
 
 (defun from-trie (trie output)
   (let ((da (init-da (node-count-limit trie))))
