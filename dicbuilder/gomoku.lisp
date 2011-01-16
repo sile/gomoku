@@ -52,9 +52,36 @@
           (write-int invoke out)
           (write-int group out)
           (write-int length out)))))
-  (nreverse categorys))
+  (mapcar (lambda (x) (intern (symbol-name x) :keyword)) (nreverse categorys)))
+
+(defun make-category (categorys category-id-map)
+  (let ((id (position (car categorys) category-id-map)))
+    (list id (loop FOR name IN category-id-map
+                   SUM (ash 1 (position name category-id-map))))))
 
 (defun build-code-category (char.def code.bin)
-  (each-char.def-line (line char.def :type :code)
-    (print line))
+  (let* ((map (build-char-category char.def "/dev/null"))
+         (codes (make-array #x10000 :initial-element (make-category '(:default) map))))
+    (each-char.def-line (line char.def :type :code)
+      (let* ((mid (position #\Space line))
+             (range (subseq line 0 mid))
+             (categorys (subseq line (1+ mid))))
+        (let* ((beg (parse-integer range :start 2 :end 6 :radix 16))
+               (end (if (= (length range) 6)
+                        beg
+                      (parse-integer range :start 10 :end 14 :radix 16)))
+               (category (with-input-from-string (in categorys)
+                           (make-category (loop FOR c = (read in nil nil)
+                                                WHILE c 
+                                                COLLECT (intern (symbol-name c) :keyword))
+                                          map))))
+          (loop FOR code FROM beg TO end
+                DO
+                (setf (aref codes code) category)))))
+    (with-open-file (out code.bin :direction :output :if-exists :supersede :element-type 'octet)
+      (loop FOR (category-id mask) ACROSS codes
+        DO
+        (write-int category-id out :width 1)
+        (write-int mask out :width 2))))
   'done)
+    
