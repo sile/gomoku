@@ -43,8 +43,7 @@
   (setf (aref (da-base da) node-idx) base-idx))
 
 ;; XXX:
-(defparameter *map* 
-  (make-array #x10000 :initial-element nil))
+(defvar *map* )
 (defparameter *cur* 0)
 
 (defun build-impl (trie alloca da node-idx memo)
@@ -101,6 +100,9 @@
           (gomoku::write-int node-count out :width 4)
           
           (dotimes (i node-count)
+            (when (< i 10)
+              (format t "BASE:~4,'0x CHCK:~2,'0x OPTS:~4,'0x~%" 
+                      (aref base i) (aref chck i) (aref opts i)))
             (let ((enc 0))
               (setf (ldb (byte 24  0) enc) (aref base i)
                     (ldb (byte 16 24) enc) (aref chck i)
@@ -116,3 +118,58 @@
           |#
           ))))
   'done)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; auxiliary function(2)
+(declaim (inline base chck terminal? sibling-total inc-id))
+(defun base (nodes idx)
+  (ldb (byte 24 0) (aref nodes idx)))
+
+(defun chck (nodes idx)
+  (ldb (byte 16 24) (aref nodes idx)))
+
+(defun terminal? (nodes idx)
+  (ldb-test (byte 1 40) (aref nodes idx)))
+
+(defun sibling-total (nodes idx)
+  (ldb (byte 23 41) (aref nodes idx)))
+
+(defun inc-id (id nodes node)
+  (+ id (if (terminal? nodes node) 1 0) (sibling-total nodes node)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; external function(2)
+(defstruct dawg 
+  (nodes #() :type (simple-array (unsigned-byte 64))))
+
+(defun read-int (in &key (width 1))
+  (loop FOR i FROM (1- width) DOWNTO 0
+        SUM (ash (read-byte in) (* i 8))))
+
+(defun load-dic (path)
+  (with-open-file (in path :element-type '(unsigned-byte 8))
+    (let* ((node-count (read-int in :width 4))
+           (nodes (make-array node-count :element-type '(unsigned-byte 64))))
+      (dotimes (i node-count)
+        (setf (aref nodes i) (read-int in :width 8)))
+
+      (make-dawg :nodes nodes))))
+
+(defmacro nlet (fn-name letargs &body body)
+  `(labels ((,fn-name ,(mapcar #'car letargs)
+              ,@body))
+     (,fn-name ,@(mapcar #'cadr letargs))))
+
+(defun get-id (key dawg &key (start 0) (end (length key)))
+  (with-slots (nodes) (the dawg dawg)
+    (let ((in (code-stream:make key :start start :end end)))
+      (nlet recur ((node 0) (id -1))
+        (declare (fixnum id))
+        (print `(:node ,node :id ,id))
+        (if (code-stream:eos? in)
+            (and (terminal? nodes node) (inc-id id nodes node))
+          (let* ((arc (or (aref *map* (code-stream:read in)) 0))  ;; XXX:
+                 (next (+ (base nodes node) arc)))
+            (print `(:arc ,arc :next ,next :chck ,(chck nodes next)))
+            (when (= (chck nodes next) arc)
+              (recur next (inc-id id nodes node)))))))))
