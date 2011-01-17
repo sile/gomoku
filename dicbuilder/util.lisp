@@ -4,7 +4,7 @@
 
 (defun write-int (int stream &key (width 1) (endian :big))
   (declare ((member :big :little) endian)
-           ((member 1 2 4) width))
+           ((member 1 2 4 8) width))
   (flet ((write-impl (pos) 
            (write-byte (ldb (byte 8 (* pos 8)) int) stream)))
     (declare (inline write-impl))

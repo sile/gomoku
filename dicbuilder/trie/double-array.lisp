@@ -25,11 +25,11 @@
                (dolist (child (trie::collect-children node))
                  (recur child)))))
     (recur trie)
-    (round (* 2.5 (hash-table-count map)))))
+    (round (* 4 (hash-table-count map)))))
 
 (defun init-da (node-count-limit)
   (make-da :base (make-array node-count-limit :element-type '(unsigned-byte 32) :initial-element 0)
-           :chck (make-array node-count-limit :element-type '(unsigned-byte 16) :initial-element 0)
+           :chck (make-array node-count-limit :element-type '(unsigned-byte 16) :initial-element #xFFFF)
            :opts (make-array node-count-limit :element-type '(unsigned-byte 32) :initial-element 0)))
 
 (defun set-opts (da node-idx options)
@@ -42,6 +42,11 @@
 (defun set-base (da node-idx base-idx)
   (setf (aref (da-base da) node-idx) base-idx))
 
+;; XXX:
+(defparameter *map* 
+  (make-array #x10000 :initial-element nil))
+(defparameter *cur* 0)
+
 (defun build-impl (trie alloca da node-idx memo)
   (a.if #1=(gethash (trie::node-child trie) memo)
         (progn 
@@ -50,30 +55,64 @@
     (let ((children (trie::collect-children trie)))
       (set-opts da node-idx (trie::node-options trie))
       (when children
+        ;; XXX:
+        (dolist (child children)
+          (a.if #3=(aref *map* #2=(trie::node-label child))
+              ()
+            (setf (aref *map* #2#) #+IGNORE #2# #-IGNORE(incf *cur*))))
+
         (let ((base-idx (node-allocator:allocate 
                          alloca
-                         (mapcar #'trie::node-label children))))
+                         #-IGNORE (mapcar (lambda (child) #3#) children)
+                         #+IGNORE (mapcar #'trie::node-label children))))
           (setf #1# base-idx)
           (set-base da node-idx base-idx)
           (dolist (child children)
             (build-impl child alloca da
-                        (set-chck da base-idx (trie::node-label child))
+                        (set-chck da base-idx #3# #+IGNORE(trie::node-label child))
                         memo)))))))
 
+(defun adjust (da)
+  (with-slots (base chck opts) da
+    (let ((max-base (loop FOR x ACROSS base MAXIMIZE x))
+          (max-code (loop FOR x ACROSS chck UNLESS (= x #xFFFF) MAXIMIZE x)))
+      (print `(:max ,max-base ,max-code))
+      (setf base (subseq base 0 (+ max-base max-code 1))
+            chck (subseq chck 0 (+ max-base max-code 1))
+            opts (subseq opts 0 (+ max-base max-code 1)))))
+  da)
+
 (defun from-trie (trie output &aux (limit (node-count-limit trie)))
+  ;; XXX:
+  (defparameter *map* 
+    (make-array #x10000 :initial-element nil))
+  (defparameter *cur* 0)
+
   (let ((da (init-da limit)))
     (build-impl trie (node-allocator:make limit) da 0 
                 (make-hash-table :test #'eq))
+    (adjust da)
+    (print `(:cur ,*cur*))
     (with-slots (base chck opts) da
       (with-open-file (out output :direction :output 
                            :if-exists :supersede
                            :element-type '(unsigned-byte 8))
         (let ((node-count (node-count da)))
           (gomoku::write-int node-count out :width 4)
+          
+          (dotimes (i node-count)
+            (let ((enc 0))
+              (setf (ldb (byte 24  0) enc) (aref base i)
+                    (ldb (byte 16 24) enc) (aref chck i)
+                    (ldb (byte 24 40) enc) (aref opts i))
+              (gomoku::write-int enc out :width 8)))
+          #|
           (dotimes (i node-count)
             (gomoku::write-int (aref base i) out :width 4))
           (dotimes (i node-count)
             (gomoku::write-int (aref chck i) out :width 2))
           (dotimes (i node-count)
-            (gomoku::write-int (aref opts i) out :width 4))))))
+            (gomoku::write-int (aref opts i) out :width 4))
+          |#
+          ))))
   'done)

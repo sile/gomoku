@@ -31,7 +31,8 @@
 
 (defun peek (in)
   (with-slots (src pos) (the code-stream in)
-    (aref *map* (char-code (char src pos)))))
+    (char-code (char src pos))
+    #+IGNORE(aref *map* (char-code (char src pos)))))
 
 (defun eat (in)
   (with-slots (pos) (the code-stream in)
