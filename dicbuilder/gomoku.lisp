@@ -85,10 +85,77 @@
         (write-int mask out :width 2))))
   'done)
 
+(defun collect-unk-morp (unk.def char.def)
+  (let ((map (build-char-category char.def "/dev/null"))
+        (morps (make-hash-table)))
+    (with-open-file (in unk.def :external-format *text-dictionary-charset*)
+      (loop FOR line = (read-line in nil nil)
+            WHILE line
+        DO
+        (with-input-from-string (in2 (nsubstitute #\Space #\, line))
+          (let ((word-id (position (read in2) map :test #'string=))
+                (pos-id (read in2))
+                (cost (progn (read in2) (read in2))))
+            (push (list pos-id cost) (gethash word-id morps))))))
+    morps))
+
+(defun collect-morp (morps outdir &aux (da (double-array::load-dic 
+                                            (merge-pathnames #P"word-id.bin" outdir))))
+  (dolist (csv (directory #P"*.csv"))
+    (with-open-file (in csv :external-format *text-dictionary-charset*)
+      (loop FOR line = (read-line in nil nil)
+            WHILE line
+        DO
+        (let* ((p1 (position #\, line))
+               (p2 (position #\, line :start (1+ p1)))
+               (p3 (position #\, line :start (1+ p2)))
+               (p4 (position #\, line :start (1+ p3))))
+          (let ((word-id (double-array::get-id (subseq line 0 p1) da))
+                (pos-id (parse-integer line :start (1+ p1) :end p2))
+                (cost (parse-integer line :start (1+ p3) :end p4)))
+            ;;(assert word-id () "line:~A" line)
+            ;; XXX: "￥"?
+            (unless word-id
+              (print line))
+            (when word-id
+              (push (list pos-id cost) (gethash word-id morps))))))))
+  morps)
+
+(defun build-morp (unk.def char.def morp.bin)
+  (let ((morps (collect-unk-morp unk.def char.def)))
+    (collect-morp morps morp.bin)
+    (print morps)
+    ;; TODO:
+    (let ((ms (make-array (+ (hash-table-count morps) 10) #|XXX: 10+?|# :initial-element '())))
+      (maphash (lambda (word-id vs)
+                 (setf (aref ms word-id) vs))
+               morps)
+      (with-open-file (out morp.bin :direction :output :if-exists :supersede
+                           :element-type '(unsigned-byte 8))
+        (loop FOR vs ACROSS ms
+          DO
+          (loop FOR (pos-id cost) IN vs
+            DO
+            (write-int pos-id out :width 2)
+            (write-int cost out :width 2))))
+      
+      (with-open-file (out (merge-pathnames "id-morps.bin" morp.bin)
+                           :direction :output :if-exists :supersede
+                           :element-type '(unsigned-byte 8))
+        (loop WITH offset = 0
+              FOR vs ACROSS ms
+          DO
+          (write-int offset out :width 4)
+          (incf offset (length vs))
+          FINALLY
+          (write-int offset out :width 4)))
+       )))
+
 (defun build-dic (text-dic-dir output-dir &aux (output-dir (probe-file output-dir)))
   (let ((*default-pathname-defaults* (probe-file text-dic-dir)))
+    (build-morp #P"unk.def" #P"char.def" (merge-pathnames "morp.bin" output-dir))
     (build-matrix #P"matrix.def" (merge-pathnames "matrix.bin" output-dir))
     (build-pos-data #P"left-id.def" (merge-pathnames "pos.bin" output-dir))
-    (build-char-category #P"char.def" (merge-pathnames "category.bin" output-dir))
+    (print (build-char-category #P"char.def" (merge-pathnames "category.bin" output-dir)))
     (build-code-category #P"char.def" (merge-pathnames "code.bin" output-dir)))
   'done)

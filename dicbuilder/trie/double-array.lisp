@@ -91,7 +91,7 @@
     (build-impl trie (node-allocator:make limit) da 0 
                 (make-hash-table :test #'eq))
     (adjust da)
-    (print `(:cur ,*cur*))
+    ;;(print `(:cur ,*cur*))
     (with-slots (base chck opts) da
       (with-open-file (out output :direction :output 
                            :if-exists :supersede
@@ -165,11 +165,11 @@
     (let ((in (code-stream:make key :start start :end end)))
       (nlet recur ((node 0) (id -1))
         (declare (fixnum id))
-        (print `(:node ,node :id ,id))
+        ;;(print `(:node ,node :id ,id))
         (if (code-stream:eos? in)
             (and (terminal? nodes node) (inc-id id nodes node))
           (let* ((arc (or (aref *map* (code-stream:read in)) 0))  ;; XXX:
                  (next (+ (base nodes node) arc)))
-            (print `(:arc ,arc :next ,next :chck ,(chck nodes next)))
+            ;;(print `(:arc ,arc :next ,next :chck ,(chck nodes next)))
             (when (= (chck nodes next) arc)
               (recur next (inc-id id nodes node)))))))))
