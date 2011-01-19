@@ -172,7 +172,7 @@
 (defun get-id (key dawg &key (start 0) (end (length key)))
   (with-slots (nodes) (the dawg dawg)
     (let ((in (code-stream:make key :start start :end end)))
-      (nlet recur ((node 0) (id -1))
+      (nlet recur ((node 0) (id -1)) ; TODO: idには未知語分のオフセットを加える
         (declare (fixnum id))
         ;;(print `(:node ,node :id ,id))
         (if (code-stream:eos? in)
