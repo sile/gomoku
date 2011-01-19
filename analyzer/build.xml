@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="gomoku" default="jar"  basedir=".">
+  <property name="version" value="0.0.1" />
+  <property name="src.dir" value="src"/>
+  <property name="classes.dir" value="classes"/>
+  <property name="javadoc.dir" value="docs"/>
+
+  <target name="jar" depends="compile">
+    <jar jarfile="gomoku-${version}.jar" basedir="${classes.dir}">
+      <metainf dir=".">
+	<include name="COPYING" />
+      </metainf>
+    </jar>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="${classes.dir}" />
+    <javac debug="on" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}" />
+    <copy todir="${classes.dir}/net/reduls/gomoku/data">
+      <fileset dir="${src.dir}/net/reduls/gomoku/data">
+        <include name="*.bin" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="javadoc">
+    <javadoc destdir="${javadoc.dir}">
+      <fileset dir="${src.dir}"/>
+    </javadoc>
+  </target>
+ 
+  <target name="clean">
+    <delete dir="${classes.dir}" />
+    <delete dir="${javadoc.dir}" />
+    <delete file="${jar.name}" />
+  </target>
+</project>
