@@ -55,9 +55,10 @@
   (mapcar (lambda (x) (intern (symbol-name x) :keyword)) (nreverse categorys)))
 
 (defun make-category (categorys category-id-map)
+  (print categorys)
   (let ((id (position (car categorys) category-id-map)))
-    (list id (loop FOR name IN category-id-map
-                   SUM (ash 1 (position name category-id-map))))))
+    (list id (print (loop FOR name IN categorys
+                   SUM (ash 1 (position name category-id-map)))))))
 
 (defun build-code-category (char.def code.bin)
   (let* ((map (build-char-category char.def "/dev/null"))

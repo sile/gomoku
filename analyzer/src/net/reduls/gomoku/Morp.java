@@ -7,7 +7,6 @@ import java.io.DataInputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
-
 public final class Morp {
   public static final class Info {
     public final short posId;
