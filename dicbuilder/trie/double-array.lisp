@@ -117,6 +117,15 @@
             (gomoku::write-int (aref opts i) out :width 4))
           |#
           ))))
+
+  ;; XXX:
+  (with-open-file (out (merge-pathnames #P"code-map.bin" output)
+                       :direction :output
+                       :if-exists :supersede
+                       :element-type '(unsigned-byte 8))
+    (loop FOR c ACROSS *map*
+      DO
+      (gomoku::write-int (or c 0) out :width 2)))
   'done)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
