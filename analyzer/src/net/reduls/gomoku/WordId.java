@@ -1,5 +1,6 @@
 package net.reduls.gomoku;
 
+import java.util.List;
 import java.io.DataInputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -59,6 +60,31 @@ public final class WordId {
         }
     }
 
+    public static interface Callback {
+        void call(int start, int offset, List<Morp.Info> morps);
+    }
+ 
+    public static void eachCommonPrefix(String str, int start, Callback fn) {
+        int node = 0;
+        int id = -1;
+        int i = start;
+
+        for(;; i++) {
+
+            if(is_terminal(node))
+                fn.call(start, i, Morp.surface_morps_map.get(incId(id,node)));
+
+            if(i==str.length())
+                return;
+            char arc = codeMap[str.charAt(i)];
+            int next = base(node)+arc;
+            if(chck(next) != arc)
+                return;
+            id = incId(id, node);
+            node = next;
+        }
+    }
+
     // XXX: 読み込み時にデコードしておいた方が良い?
     private static char chck(int node) {
         return (char)((nodes[node]>>24) & 0xFFFF);
@@ -80,7 +106,23 @@ public final class WordId {
         return id + (is_terminal(node) ? 1 : 0) + siblingTotal(node);
     }
 
-    public static void main(String[] args) {
-        System.out.println("=> "+WordId.getId(args[0]));
+    //
+    public static final class SampleCallback implements Callback {
+        public void call(int start, int offset, List<Morp.Info> morps) {
+            System.out.println(start+"~"+offset+":");
+            for(Morp.Info mi : morps) 
+                System.out.println("\t"+mi.posId+", "+mi.cost);
+            System.out.println("");
+        }
     }
+
+    public static void main(String[] args) {
+        WordId.eachCommonPrefix(args[0], 0, new SampleCallback());
+    }
+
+    /*
+      public static void main(String[] args) {
+      System.out.println("=> "+WordId.getId(args[0]));
+      }
+    */
 }

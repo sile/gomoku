@@ -28,6 +28,10 @@ public final class Matrix {
         }
     }
 
+    public static short linkCost(int leftWordId, int rightWordId) {
+        return matrix[leftWordId][rightWordId];
+    }
+
     public static void main(String[] args) {
         for (short[] nn : matrix)
             for(short n : nn)

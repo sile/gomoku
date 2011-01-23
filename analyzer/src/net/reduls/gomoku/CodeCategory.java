@@ -8,11 +8,13 @@ import java.io.IOException;
 
 public final class CodeCategory {
     public static final class Category {
+        public final int id; // XXX: 不要にしたい?
         public final boolean invoke;
         public final boolean group;
         public final byte length;
         
-        public Category(boolean invoke, boolean group, byte length) {
+        public Category(int id, boolean invoke, boolean group, byte length) {
+            this.id = id;
             this.invoke = invoke;
             this.group = group;
             this.length = length;
@@ -38,8 +40,9 @@ public final class CodeCategory {
                 new DataInputStream
                 (new BufferedInputStream
                  (Matrix.class.getResourceAsStream("data/category.bin")));
-            for(;;) 
-                categorys.add(new Category(in.readByte()==1,
+            for(int id=0;; id++) 
+                categorys.add(new Category(id,
+                                           in.readByte()==1,
                                            in.readByte()==1,
                                            in.readByte()));
         } catch(IOException ex) {}
@@ -57,6 +60,10 @@ public final class CodeCategory {
                                    in.readShort()));
             in.close();
         } catch(IOException ex) {}        
+    }
+
+    public static boolean isCompatible(char code1, char code2) {
+        return (codes.get(code1).mask & codes.get(code2).mask) != 0;
     }
 
     public static void main(String[] args) {
