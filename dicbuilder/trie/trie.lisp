@@ -1,19 +1,19 @@
 (defpackage trie
-  (:use :common-lisp :gomoku)
+  (:use :common-lisp :gomoku.util)
   (:export build))
 (in-package :trie)
 
-(gomoku::package-alias :code-stream :stream)
+(package-alias :code-stream :stream)
 
-(deftype positive-fixnum () `(integer 0 ,most-positive-fixnum))
+(declaim #.gomoku::*fastest*)
+(deftype positive-fixnum () '(integer 0 #.most-positive-fixnum))
 
-(declaim (inline fixnumize write-bigendian-uint4 read-bigendian-uint4))
+;;;;;;;;;;;;;;;;;;;;
+;;; utility function
+(declaim (inline fixnumize))
 (defun fixnumize (n)
+  (declare (sb-ext:muffle-conditions sb-ext:compiler-note))
   (ldb (byte #.(integer-length most-positive-fixnum) 0) n))
-(defmacro nlet (fn-name letargs &body body)
-  `(labels ((,fn-name ,(mapcar #'car letargs)
-              ,@body))
-     (,fn-name ,@(mapcar #'cadr letargs))))
 
 ;;;;;;;;
 ;;; node
@@ -32,7 +32,7 @@
              `(with-slots (,slot) (the node ,node)
                 (if (null ,slot)
                     0
-                  (the positive-fixnum
+                  (the fixnum
                        (+ (if (node-terminal? ,slot) 1 0)
                           (node-child-total ,slot) (node-sibling-total ,slot)))))))
   (defun calc-child-total (node) (calc-xxx-total node child))
@@ -46,6 +46,7 @@
        (= (node-label n1) (node-label n2))
        (eq (node-terminal? n1) (node-terminal? n2))))
 
+(declaim (ftype (function (node) positive-fixnum) sxhash-node))
 (defun sxhash-node (node)
   (if (null node)
       #.(sxhash nil)
@@ -90,24 +91,23 @@
           (push-child in parent))
       (insert (stream:eat in) node memo))))
 
-(defun build-from-file (filepath &key show-progress)
-  (when show-progress
-    (format t "~&; build trie from ~A:~%" filepath))
-  (with-open-file (is filepath)
-    (loop WITH trie = (make-node)
-          WITH memo = (make-hash-table :test #'node=)
-          FOR line-num OF-TYPE positive-fixnum FROM 0
-          FOR line = (read-line is nil nil)
-          WHILE line
-      DO
-      (when (and show-progress (zerop (mod line-num 100000)))
-        (format t "~&;  ~A~%" line-num))
-      (let ((in (stream:make line)))
-        (declare (dynamic-extent in))
-        (insert in trie memo))
+(defun collect-keys (&aux keys)
+  (dolist (csv (directory #P"*.csv"))
+    (each-line (line csv)
+      (push (subseq line 0 (position #\, line))
+            keys)))
+  (sort keys #'string<))
 
-      FINALLY
-      (return (share trie memo)))))
+(defun build (text-dic-dir)
+  (let ((*default-pathname-defaults* (probe-file text-dic-dir))
+        (trie (make-node))
+        (memo (make-hash-table :test #'node=)))
+    (dolist (key (collect-keys) (share trie memo))
+      ;(declare (simple-string key))
+      (let ((in (stream:make key)))
+        (declare (dynamic-extent in))
+        (insert in trie memo)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; other external function
@@ -138,7 +138,6 @@
   (declare (simple-string key)
            (node trie))
   (let ((in (stream:make key)))
-    ;; (declare (dynamic-extent in))
     (nlet recur ((in in) (node (node-child trie)) (parent trie))
       (cond ((stream:eos? in) (node-terminal? parent))
             ((null node) nil)
@@ -147,4 +146,4 @@
             ((< (stream:peek in) (node-label node))
              (recur in (node-sibling node) parent))))))
 
-(gomoku::package-alias :code-stream)
+(package-alias :code-stream)

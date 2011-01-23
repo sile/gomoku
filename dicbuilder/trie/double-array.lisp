@@ -1,5 +1,5 @@
 (defpackage double-array
-  (:use :common-lisp :gomoku)
+  (:use :common-lisp :gomoku.util)
   (:export from-trie))
 (in-package :double-array)
 
@@ -7,12 +7,6 @@
   (base #() :type (simple-array (unsigned-byte 32)))
   (chck #() :type (simple-array (unsigned-byte 16)))
   (opts #() :type (simple-array (unsigned-byte 32))))
-
-(defmacro a.if (exp then else)
-  `(let ((it ,exp))
-     (if it
-         ,then
-       ,else)))
 
 ;; XXX:
 (defun node-count (da)
