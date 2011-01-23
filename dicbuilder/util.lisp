@@ -12,9 +12,6 @@
       (:big    (loop FOR i FROM (1- width) DOWNTO 0 DO (write-impl i)))
       (:little (loop FOR i FROM 0 BELOW width       DO (write-impl i))))))
 
-(defmacro read-int (stream byte-width)
-  `(the (signed-byte ,(* 8 byte-width)) (read ,stream)))
-
 (defmacro package-alias (package &rest alias-list)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (rename-package ,package ,package ',alias-list)))

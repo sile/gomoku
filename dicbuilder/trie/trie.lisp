@@ -1,6 +1,8 @@
 (defpackage trie
   (:use :common-lisp :gomoku.util)
-  (:export build))
+  (:export build
+           node-options
+           collect-children))
 (in-package :trie)
 
 (package-alias :code-stream :stream)
@@ -91,23 +93,29 @@
           (push-child in parent))
       (insert (stream:eat in) node memo))))
 
+(defun unique (keys)
+  (loop FOR (prev cur) ON keys
+        WHILE cur
+        UNLESS (string= prev cur)
+    COLLECT cur INTO list
+    FINALLY
+    (return (cons (first keys) list))))
+        
 (defun collect-keys (&aux keys)
   (dolist (csv (directory #P"*.csv"))
     (each-line (line csv)
       (push (subseq line 0 (position #\, line))
             keys)))
-  (sort keys #'string<))
+  (unique (sort keys #'string<)))
 
 (defun build (text-dic-dir)
   (let ((*default-pathname-defaults* (probe-file text-dic-dir))
         (trie (make-node))
         (memo (make-hash-table :test #'node=)))
     (dolist (key (collect-keys) (share trie memo))
-      ;(declare (simple-string key))
       (let ((in (stream:make key)))
         (declare (dynamic-extent in))
         (insert in trie memo)))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; other external function
@@ -131,19 +139,3 @@
     (push child acc)
     FINALLY
     (return acc)))
-
-;;;;;;;;;;;;;
-;;; for debug
-(defun member? (key trie)
-  (declare (simple-string key)
-           (node trie))
-  (let ((in (stream:make key)))
-    (nlet recur ((in in) (node (node-child trie)) (parent trie))
-      (cond ((stream:eos? in) (node-terminal? parent))
-            ((null node) nil)
-            ((= (stream:peek in) (node-label node))
-             (recur (stream:eat in) (node-child node) node))
-            ((< (stream:peek in) (node-label node))
-             (recur in (node-sibling node) parent))))))
-
-(package-alias :code-stream)

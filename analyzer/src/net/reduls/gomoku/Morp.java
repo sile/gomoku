@@ -27,7 +27,7 @@ public final class Morp {
             DataInputStream in2 =
                 new DataInputStream
                 (new BufferedInputStream
-                 (Matrix.class.getResourceAsStream("data/morp.bin")));
+                  (Matrix.class.getResourceAsStream("data/morp.bin")));
             int cur=in.readInt();
             for(;;) {
                 int end=in.readInt();

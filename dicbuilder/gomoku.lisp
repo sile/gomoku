@@ -4,18 +4,19 @@
   (declare #.*fastest*)
   (with-open-file (in matrix.def :external-format *text-dictionary-charset*)
     (with-open-file (out matrix.bin :direction :output :if-exists :supersede :element-type 'octet)
-      (let ((left-num (read-int in 2))
-            (right-num (read-int in 2)))
+      (let ((left-num (read in))
+            (right-num (read in)))
+        (declare ((unsigned-byte 2) left-num right-num))
         (write-int left-num out :width 4)
         (write-int right-num out :width 4)
 
         (dotimes (l left-num)
           (dotimes (r right-num)
-            (assert (and (= l (read-int in 2)) (= r (read-int in 2))))
-            (write-int (read-int in 2)#|cost|# out :width 2)))))))
+            #+IGNORE (assert (and (= l (read in)) (= r (read in))))
+            (write-int (the (unsigned-byte 2) (read in)#|cost|#) out :width 2)))))))
 
 (defun build-pos (id.def pos.bin)
-  "POS is abbreviation of 'Parts Of Speech"
+  "POS is abbreviation of 'Parts Of Speech'"
   (with-open-file (out pos.bin :direction :output :if-exists :supersede)
     (each-line (line id.def)
       (let ((pos (subseq line (1+ (position #\Space line))
@@ -48,7 +49,7 @@
   
 (defun build-char-category (char.def category.bin)
   (with-open-file (out category.bin :direction :output :if-exists :supersede :element-type 'octet)
-    (write-int (length (parse-char-category char.def)) out)
+    (write-int (length (parse-char-category char.def)) out :width 4)
     (each-char-category (name invoke group length) char.def 
       (declare (ignore name))
       (write-int invoke out)
@@ -81,7 +82,7 @@
                 DO
                 (setf (aref codes code) category)))))
     (with-open-file (out code.bin :direction :output :if-exists :supersede :element-type 'octet)
-      (write-int (length codes) out :width 2)
+      (write-int (length codes) out :width 4)
       (loop FOR (category-id mask) ACROSS codes
         DO
         (write-int category-id out :width 1)
@@ -112,7 +113,8 @@
           ;;(assert word-id () "line:~A" line)
           ;; XXX: "￥"?
           (unless word-id
-            (print line))
+            (print line)
+            (assert word-id))
           (when word-id
             (push (list pos-id cost) (gethash word-id morps)))))))
   morps)
@@ -163,7 +165,7 @@
       (with-time "code.bin"
                  (build-code-category #P"char.def" (out-path #P"code.bin")))
       (with-time "surface-id.bin"
-                 (double-array::from-trie (trie:build text-dic-dir) (out-path #P"surface-id.bin")))
+                 (double-array:build *default-pathname-defaults* output-dir))
       
       (format *error-output* "; morp.bin~%")
       (build-morp #P"unk.def" #P"char.def" (merge-pathnames "morp.bin" output-dir))

@@ -1,7 +1,6 @@
 (defpackage gomoku.util
   (:use :common-lisp)
   (:export write-int
-           read-int
            with-time
            package-alias
            nlet

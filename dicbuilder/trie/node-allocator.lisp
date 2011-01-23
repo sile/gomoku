@@ -22,9 +22,6 @@
 
 (defun allocate-impl (alloca idx)
   (with-slots (nexts prevs) (the alloca alloca)
-    #+IGNORE
-    (print (list (/= -1 (aref nexts idx))
-                 (/= -1 (aref prevs idx))))
     (assert (and (/= -1 (aref nexts idx))
                  (/= -1 (aref prevs idx))))
     (setf (aref nexts (aref prevs idx)) (aref nexts idx)
