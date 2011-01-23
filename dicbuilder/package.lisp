@@ -1,12 +1,14 @@
 (defpackage gomoku.util
   (:use :common-lisp)
   (:export write-int
+           read-int
            with-time
            package-alias
            nlet
            each-line
            a.if
-           it))
+           it
+           defmain))
 
 (defpackage gomoku
   (:use :common-lisp :gomoku.util)

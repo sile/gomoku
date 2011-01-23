@@ -1,9 +1,11 @@
 (defpackage double-array
   (:use :common-lisp :gomoku.util)
   (:export build
+           load-dic
            get-id))
 (in-package :double-array)
 
+(deftype uint1 () '(unsigned-byte 8))
 (deftype uint2 () '(unsigned-byte 16))
 (deftype uint3 () '(unsigned-byte 24))
 (deftype uint4 () '(unsigned-byte 32))
@@ -75,7 +77,6 @@
   (with-slots (base chck opts) da
     (let ((max-base (loop FOR x ACROSS base MAXIMIZE x))
           (max-code (loop FOR x ACROSS chck UNLESS (= x #xFFFF) MAXIMIZE x)))
-      (print `(:max ,max-base ,max-code))
       (setf base (subseq base 0 (+ max-base max-code 1))
             chck (subseq chck 0 (+ max-base max-code 1))
             opts (subseq opts 0 (+ max-base max-code 1)))))
@@ -94,7 +95,7 @@
     (with-slots (base chck opts) da
       (with-open-file (out #P"surface-id.bin" :direction :output 
                                               :if-exists :supersede
-                                              :element-type '(unsigned-byte 8))
+                                              :element-type 'uint1)
         (let ((node-count (node-count da)))
           (write-int (node-count da) out :width 4)
           
@@ -107,7 +108,7 @@
 
     (with-open-file (out #P"code-map.bin" :direction :output
                                           :if-exists :supersede
-                                          :element-type '(unsigned-byte 8))
+                                          :element-type 'uint1)
       (write-int (length code-map) out :width 4)
       (loop FOR c ACROSS code-map
             DO
@@ -140,34 +141,31 @@
   (code-map #() :type (simple-array uint2))
   (nodes    #() :type (simple-array uint8)))
 
-(defun read-int (in &key (width 1))
-  (loop FOR i FROM (1- width) DOWNTO 0
-        SUM (ash (read-byte in) (* i 8))))
-
-(defun load-dic (path)
-  (with-open-file (in path :element-type '(unsigned-byte 8))
-    (let* ((node-count (read-int in :width 4))
-           (nodes (make-array node-count :element-type '(unsigned-byte 64))))
-      (dotimes (i node-count)
-        (setf (aref nodes i) (read-int in :width 8)))
-
-      (make-dawg :nodes nodes))))
-
-(defmacro nlet (fn-name letargs &body body)
-  `(labels ((,fn-name ,(mapcar #'car letargs)
-              ,@body))
-     (,fn-name ,@(mapcar #'cadr letargs))))
+(defun load-dic (dic-dir &aux (*default-pathname-defaults* (probe-file dic-dir)))
+  (flet ((load-nodes ()
+           (with-open-file (in #P"surface-id.bin" :element-type 'uint1)
+             (let* ((node-count (read-int in :width 4))
+                    (nodes (make-array node-count :element-type 'uint8)))
+               (dotimes (i node-count nodes)
+                 (setf (aref nodes i) (read-int in :width 8))))))
+         (load-code-map ()
+           (with-open-file (in #P"code-map.bin" :element-type 'uint1)
+             (let* ((code-limit (read-int in :width 4))
+                    (code-map (make-array code-limit :element-type 'uint2)))
+               (dotimes (i code-limit code-map)
+                 (setf (aref code-map i) (read-int in :width 2)))))))
+    (make-dawg :nodes (load-nodes)
+               :code-map (load-code-map))))
 
 (defun get-id (key dawg &key (start 0) (end (length key)))
+  (declare (simple-string key))
   (with-slots (nodes code-map) (the dawg dawg)
     (let ((in (code-stream:make key :start start :end end)))
-      (nlet recur ((node 0) (id -1)) ; TODO: idには未知語分のオフセットを加える
-        (declare (fixnum id))
-        ;;(print `(:node ,node :id ,id))
+      (nlet recur ((node 0) (id -1))
+        (declare (fixnum id node))
         (if (code-stream:eos? in)
             (and (terminal? nodes node) (inc-id id nodes node))
-          (let* ((arc (or (aref code-map (code-stream:read in)) 0)) ;; XXX:
+          (let* ((arc (aref code-map (code-stream:read in)))
                  (next (+ (base nodes node) arc)))
-            ;;(print `(:arc ,arc :next ,next :chck ,(chck nodes next)))
             (when (= (chck nodes next) arc)
               (recur next (inc-id id nodes node)))))))))

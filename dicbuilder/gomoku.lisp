@@ -6,14 +6,14 @@
     (with-open-file (out matrix.bin :direction :output :if-exists :supersede :element-type 'octet)
       (let ((left-num (read in))
             (right-num (read in)))
-        (declare ((unsigned-byte 2) left-num right-num))
+        (declare ((unsigned-byte 16) left-num right-num))
         (write-int left-num out :width 4)
         (write-int right-num out :width 4)
 
         (dotimes (l left-num)
           (dotimes (r right-num)
             #+IGNORE (assert (and (= l (read in)) (= r (read in))))
-            (write-int (the (unsigned-byte 2) (read in)#|cost|#) out :width 2)))))))
+            (write-int (the (unsigned-byte 16) (read in)#|cost|#) out :width 2)))))))
 
 (defun build-pos (id.def pos.bin)
   "POS is abbreviation of 'Parts Of Speech'"
@@ -88,48 +88,56 @@
         (write-int category-id out :width 1)
         (write-int mask out :width 2)))))
 
-(defun collect-unk-morp (unk.def char.def)
-  (let ((map (build-char-category char.def "/dev/null"))
+(defmacro each-morpheme ((surface pos-id cost) filepath &body body)
+  `(each-line (#0=#:line ,filepath) 
+     (let* ((#1=#:p1 (position #\, #0#))
+            (#2=#:p2 (position #\, #0# :start (1+ #1#)))
+            (#3=#:p3 (position #\, #0# :start (1+ #2#)))
+            (#4=#:p4 (position #\, #0# :start (1+ #3#))))
+       (let ((,surface (subseq #0# 0 #1#))
+             (,pos-id  (parse-integer #0# :start (1+ #1#) :end #2#))
+             (,cost    (parse-integer #0# :start (1+ #3#) :end #4#)))
+         ,@body))))
+
+(defun collect-unk-morp (unk.def)
+  (let ((categorys (parse-char-category #P"char.def"))
         (morps (make-hash-table)))
-    (each-line (line unk.def)
-      (with-input-from-string (in2 (nsubstitute #\Space #\, line))
-        (let ((word-id (position (read in2) map :test #'string=))
-              (pos-id (read in2))
-              (cost (progn (read in2) (read in2))))
-          (push (list pos-id cost) (gethash word-id morps)))))
+    (each-morpheme (category-name pos-id cost) unk.def
+      (let ((morp-id (position category-name categorys :test #'string=)))
+        (push (list pos-id cost) (gethash morp-id morps))))
     morps))
 
-(defun collect-morp (morps outdir &aux (da (double-array::load-dic 
-                                            (merge-pathnames #P"word-id.bin" outdir))))
-  (dolist (csv (directory #P"*.csv"))
-    (each-line (line csv)
-      (let* ((p1 (position #\, line))
-             (p2 (position #\, line :start (1+ p1)))
-             (p3 (position #\, line :start (1+ p2)))
-             (p4 (position #\, line :start (1+ p3))))
-        (let ((word-id (double-array::get-id (subseq line 0 p1) da))
-              (pos-id (parse-integer line :start (1+ p1) :end p2))
-              (cost (parse-integer line :start (1+ p3) :end p4)))
-          ;;(assert word-id () "line:~A" line)
-          ;; XXX: "￥"?
-          (unless word-id
-            (print line)
-            (assert word-id))
-          (when word-id
-            (push (list pos-id cost) (gethash word-id morps)))))))
+(defun collect-morp (morps outdir &aux (da (double-array:load-dic 
+                                            (merge-pathnames #P"surface-id.bin" outdir))))
+  (let ((offset (length (parse-char-category #P"char.def"))))
+    (dolist (csv (directory #P"*.csv"))
+      (each-morpheme (surface pos-id cost) csv
+        (let ((morp-id (double-array:get-id surface da)))
+          (assert morp-id)
+          (push (list pos-id cost) (gethash (+ offset morp-id) morps))))))
   morps)
 
-(defun build-morp (unk.def char.def morp.bin)
-  (let ((morps (collect-unk-morp unk.def char.def)))
+;; XXX: ambiguous name
+(defun delete-unused-morp (morps)
+  (flet ((morp< (a b)
+           (if (< (first a) (first b))
+               t
+             (if (> (first a) (first b))
+                 nil
+               (< (second a) (second b))))))
+    (delete-duplicates (sort morps #'morp<) :key #'first)))
+
+(defun build-morp (unk.def morp.bin)
+  (let ((morps (collect-unk-morp unk.def)))
     (collect-morp morps morp.bin)
-    (print morps)
-    ;; TODO:
-    (let ((ms (make-array (+ (hash-table-count morps) 10) #|XXX: 10+?|# :initial-element '())))
-      (maphash (lambda (word-id vs)
-                 (setf (aref ms word-id) vs))
+
+    (let ((ms (make-array (hash-table-count morps) :initial-element '())))
+      (maphash (lambda (morp-id vs)
+                 (setf (aref ms morp-id) (delete-unused-morp vs)))
                morps)
       (with-open-file (out morp.bin :direction :output :if-exists :supersede
-                           :element-type '(unsigned-byte 8))
+                                    :element-type 'octet)
+        (write-int (length ms) out :width 4)
         (loop FOR vs ACROSS ms
           DO
           (loop FOR (pos-id cost) IN vs
@@ -137,36 +145,40 @@
             (write-int pos-id out :width 2)
             (write-int cost out :width 2))))
       
-      (with-open-file (out (merge-pathnames "id-morps.bin" morp.bin)
+      (with-open-file (out (merge-pathnames "id-morphemes-map.bin" morp.bin)
                            :direction :output :if-exists :supersede
-                           :element-type '(unsigned-byte 8))
+                           :element-type 'octet)
+        (write-int (1+ (length ms)) out :width 4)
         (loop WITH offset = 0
               FOR vs ACROSS ms
           DO
           (write-int offset out :width 4)
           (incf offset (length vs))
           FINALLY
-          (write-int offset out :width 4)))
-       )))
+          (write-int offset out :width 4))))))
 
 (defun build-dic (text-dic-dir output-dir)
+  (format *error-output* "; = BUILD DICTIONARY =~%")
+  (format *error-output* "; source text dictionary:   ~A~%" text-dic-dir)
+  (format *error-output* "; output binary dictionary: ~A~%" output-dir)
+
   (ensure-directories-exist output-dir)
+  (format *error-output* ";~%; build:~%")
   (let ((output-dir (probe-file output-dir))
         (*default-pathname-defaults* (probe-file text-dic-dir)))
     (flet ((out-path (filename)
              (merge-pathnames filename output-dir)))
-      #+IGNORE
-      (with-time "matrix.bin" 
+      (with-time "matrix" 
                  (build-matrix #P"matrix.def" (out-path #P"matrix.bin")))
-      (with-time "pos.bin" 
+      (with-time "parts-of-speech" 
                  (build-pos #P"left-id.def" (out-path #P"pos.bin")))
-      (with-time "category.bin" 
+      (with-time "char-category" 
                  (build-char-category #P"char.def" (out-path #P"category.bin")))
-      (with-time "code.bin"
+      (with-time "code-category"
                  (build-code-category #P"char.def" (out-path #P"code.bin")))
-      (with-time "surface-id.bin"
+      (with-time "surface-id"
                  (double-array:build *default-pathname-defaults* output-dir))
-      
-      (format *error-output* "; morp.bin~%")
-      (build-morp #P"unk.def" #P"char.def" (merge-pathnames "morp.bin" output-dir))
-    'done)))
+      (with-time "morpheme"
+        (build-morp #P"unk.def" (out-path "morpheme.bin")))))
+  (format *error-output* ";~%; done~%")
+  'done)

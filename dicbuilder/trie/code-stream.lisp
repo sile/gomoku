@@ -7,15 +7,10 @@
            eos?
            peek
            eat
-           read
-
-           init-code-mapping
-           save-code-mapping))
+           read))
 (in-package :code-stream)
 
 (declaim (inline make-code-stream make eos? peek eat read))
-
-(defvar *map*)
 
 (defstruct code-stream
   (src 0 :type simple-string)
@@ -31,8 +26,7 @@
 
 (defun peek (in)
   (with-slots (src pos) (the code-stream in)
-    (char-code (char src pos))
-    #+IGNORE(aref *map* (char-code (char src pos)))))
+    (char-code (char src pos))))
 
 (defun eat (in)
   (with-slots (pos) (the code-stream in)
@@ -43,29 +37,3 @@
 (defun read (in)
   (prog1 (peek in)
     (eat in)))
-
-(defun init-code-mapping (source-file)
-  (let ((map (make-array #x10000 :initial-element 0)))
-    (with-open-file (in source-file)
-      (loop FOR line = (read-line in nil nil)
-            WHILE line
-        DO
-        (loop FOR c ACROSS line
-          DO
-          (setf (aref map (char-code c)) 0))))
-    
-    (loop WITH cd = 0
-          FOR i FROM 0 BELOW (length map)
-          WHEN (zerop (aref map i))
-      DO
-      (setf (aref map i) (incf cd)))
-    (defparameter *map* map))
-  'done)
-
-(defun save-code-mapping (output-file)
-  (with-open-file (out output-file :direction :output 
-                       :if-exists :supersede :element-type '(unsigned-byte 8))
-    (loop FOR cd ACROSS *map*
-      DO
-      (gomoku::write-int cd out :width 2)))
-  'done)
