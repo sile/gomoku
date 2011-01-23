@@ -17,8 +17,8 @@
   <target name="compile">
     <mkdir dir="${classes.dir}" />
     <javac debug="on" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}" />
-    <copy todir="${classes.dir}/net/reduls/gomoku/data">
-      <fileset dir="${src.dir}/net/reduls/gomoku/data">
+    <copy todir="${classes.dir}/net/reduls/gomoku/dicdata">
+      <fileset dir="${src.dir}/net/reduls/gomoku/dicdata">
         <include name="*.bin" />
       </fileset>
     </copy>
