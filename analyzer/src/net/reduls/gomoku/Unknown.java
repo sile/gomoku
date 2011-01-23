@@ -9,7 +9,11 @@ public final class Unknown {
     public static void search(String text, int start, List<ViterbiNode> result) {
         final char ch = text.charAt(start);
         final CodeCategory.Category ct = CodeCategory.codes.get(ch).category;
+        System.out.println("IN: "+ch+", "+ct+": "+result.size()+", "+ct.invoke);
         
+        for(ViterbiNode vn : result) {
+            System.out.println(vn.length+"#"+vn.wcost+"#"+vn.posId);
+        }
         if(result.isEmpty()==false && ct.invoke==false)
             return;
 

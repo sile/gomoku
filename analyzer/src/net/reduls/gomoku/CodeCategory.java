@@ -46,8 +46,6 @@ public final class CodeCategory {
                                            in.readByte()==1,
                                            in.readByte()));
         } catch(IOException ex) {}
-        for(Category c : categorys)
-            System.out.println(c.invoke+"_"+c.group+"_"+c.length);
         
         codes = new ArrayList<Code>(0x10000);
         try {

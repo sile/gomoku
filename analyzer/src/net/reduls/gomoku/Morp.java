@@ -15,11 +15,9 @@ public final class Morp {
     }
 
     public static final List<ArrayList<Info>> surface_morps_map; 
-    public static final List<Info> g_infos; // XXX:
   
     static {
         surface_morps_map = new ArrayList<ArrayList<Info>>();
-        g_infos = new ArrayList<Info>();
         
         try {
             DataInputStream in =
@@ -36,7 +34,6 @@ public final class Morp {
                 ArrayList<Info> infos = new ArrayList<Info>(end-cur);
                 for(; cur < end; cur++) {
                     infos.add(new Info(in2.readShort(), in2.readShort()));
-                    g_infos.add(new Info(in2.readShort(), in2.readShort())); // XXX:
                 }
                 surface_morps_map.add(infos);
             } 

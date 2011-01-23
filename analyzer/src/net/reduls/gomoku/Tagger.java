@@ -77,6 +77,7 @@ public final class Tagger {
         for(int i=1; i < prevs.size(); i++) {
             final ViterbiNode p = prevs.get(i);
             final int cost = p.cost + Matrix.linkCost(p.posId, vn.posId);
+
             if(cost < vn.cost) {
                 vn.cost = cost;
                 vn.prev = p;
