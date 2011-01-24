@@ -68,9 +68,9 @@ Gomoku用のバイナリ辞書を構築する(Common Lisp)。
  $ gomoku-build-dic <入力テキスト辞書ディレクトリ> <出力バイナリ辞書ディレクトリ> [テキスト辞書の文字コード(デフォルトはeuc-jp)]
  # 注意! ディレクトリ指定は最後の'/'が必要
 
-= Gomoku辞書の変更手順
+= Gomoku辞書の更新手順
  $ cd analyzer
- $ gomoku-build-dic mecab-ipadic-2.7.0-20070801/ src/net/reduls/gomoku/dicdata/
+ $ gomoku-build-dic mecab-ipadic-2.7.0-20070801/ src/net/reduls/gomoku/dicdata/  # 新しい辞書データで上書き
  $ ant clean
  $ ant
 
