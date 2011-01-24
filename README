@@ -7,7 +7,7 @@
 
 
 [概要]
-・Igo(http://igo.sourceforge.jp/)から派生した形態素解析器
+・Igo( http://igo.sourceforge.jp/ )から派生した形態素解析器
 ・辞書データがあらかじめjarファイルに含まれていることが特徴
 ・デフォルトではIPADIC(mecab-ipadic-2.7.0-20070801)を使用している
 　・common lispで書かれた辞書構築コマンドを使うことでカスタマイズは可能
@@ -51,7 +51,7 @@ class Morpheme {
 Gomoku用のバイナリ辞書を構築する(Common Lisp)。
 デフォルトの辞書(IPADIC)をカスタマイズしたい場合は、このコマンドを使ってバイナリ辞書を作成し、jarを再ビルドする必要がある。
 
-ソース辞書にはMecabのサイト(http://mecab.sourceforge.net/)にて配布されている辞書を想定。
+ソース辞書にはMecabのサイト( http://mecab.sourceforge.net/ )にて配布されている辞書を想定。
 ※ 現時点ではIPADICにのみ対応。他の辞書での動作は未確認。
 
 
