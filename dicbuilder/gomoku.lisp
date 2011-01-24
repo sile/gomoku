@@ -12,7 +12,7 @@
 
         (dotimes (l left-num)
           (dotimes (r right-num)
-            #+IGNORE (assert (and (= l (read in)) (= r (read in))))
+            (assert (and (= l (read in)) (= r (read in))))
             (write-int (the (unsigned-byte 16) (read in)#|cost|#) out :width 2)))))))
 
 (defun build-pos (id.def pos.bin)
@@ -125,7 +125,7 @@
              (if (> (first a) (first b))
                  nil
                (< (second a) (second b))))))
-    (delete-duplicates (sort morps #'morp<) :key #'first)))
+    (delete-duplicates (sort morps #'morp<) :key #'first :from-end t)))
 
 (defun build-morp (unk.def morp.bin)
   (let ((morps (collect-unk-morp unk.def)))

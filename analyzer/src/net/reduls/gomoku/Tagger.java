@@ -13,11 +13,11 @@ public final class Tagger {
         BOS_NODES.add(ViterbiNode.makeBOSEOS());
     }
     
-    public List<Morpheme> parse(String text) {
+    public static List<Morpheme> parse(String text) {
         return parse(text, new ArrayList<Morpheme>(text.length()/2));
     }
 
-    public List<Morpheme> parse(String text, List<Morpheme> result) {
+    public static List<Morpheme> parse(String text, List<Morpheme> result) {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev) {
             final String surface = text.substring(vn.start, vn.start+vn.length);
             final String feature = vn.word.feature();
@@ -26,17 +26,17 @@ public final class Tagger {
         return result;
     }
 
-    public List<String> wakati(String text) {
+    public static List<String> wakati(String text) {
         return wakati(text, new ArrayList<String>(text.length()/1));
     }
 
-    public List<String> wakati(String text, List<String> result) {
+    public static List<String> wakati(String text, List<String> result) {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev)
             result.add(text.substring(vn.start, vn.start+vn.length));
         return result;
     }
     
-    public ViterbiNode parseImpl(String text) {
+    public static ViterbiNode parseImpl(String text) {
         final int len = text.length();
         final ArrayList<ArrayList<ViterbiNode>> nodesAry = 
             new ArrayList<ArrayList<ViterbiNode>>(len+1);
@@ -50,7 +50,7 @@ public final class Tagger {
             if(nodesAry.get(i).isEmpty()==false) {
                 WordDic.search(text, i, perResult);
                 Unknown.search(text, i, perResult);
-                
+            
                 final ArrayList<ViterbiNode> prevs = nodesAry.get(i);
                 for(int j=0; j < perResult.size(); j++) {
                     final ViterbiNode vn = perResult.get(j);
@@ -74,7 +74,7 @@ public final class Tagger {
         return head;
     }
 
-    private ViterbiNode setMincostNode(ViterbiNode vn, ArrayList<ViterbiNode> prevs) {
+    private static ViterbiNode setMincostNode(ViterbiNode vn, ArrayList<ViterbiNode> prevs) {
         final ViterbiNode f = vn.prev = prevs.get(0);
         vn.cost = f.cost + Matrix.linkCost(f.word.posId, vn.word.posId);
         

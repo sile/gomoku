@@ -25,6 +25,7 @@ public final class Morpheme {
         DataInputStream in2 = Misc.openDictionaryDataAsDIS("morpheme.bin");
 
         final int surfaceIdLimit = Misc.readInt(in1)-1;
+        final int morphemeCount = Misc.readInt(in2);
         surId_to_morps = new Info[surfaceIdLimit][];
 
         int start = Misc.readInt(in1);

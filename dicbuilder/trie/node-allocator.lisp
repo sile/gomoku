@@ -18,9 +18,13 @@
       DO
       (setf (aref nexts i) (1+ i)
             (aref prevs i) (1- i)))
-    (make-alloca :nexts nexts
-                 :prevs prevs
-                 :base-used? (make-array node-count-limit :element-type 'bit :initial-element 0))))
+
+    (let ((base-used? (make-array node-count-limit :element-type 'bit :initial-element 0)))
+      (setf (bit base-used? 0) 1)
+
+      (make-alloca :nexts nexts
+                   :prevs prevs
+                   :base-used? base-used?))))
 
 (defun allocate-impl (alloca idx)
   (declare #.gomoku::*fastest*)
