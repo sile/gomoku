@@ -33,6 +33,14 @@ public final class Misc {
         }
     }
 
+    public static long readLong(DataInput in) {
+        try {
+            return in.readLong();
+        } catch (IOException ex) {
+            throw new AssertionError(ex.getMessage());
+        }
+    }
+
     public static int readInt(DataInput in) {
         try {
             return in.readInt();
