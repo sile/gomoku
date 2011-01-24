@@ -17,6 +17,6 @@ public final class ViterbiNode {
     }
 
     public static ViterbiNode makeBOSEOS() {
-        return new ViterbiNode(0, (short)0, null, false);
+        return new ViterbiNode(0, (short)0, new Morpheme.Info((short)0,(short)0), false);
     }
 }

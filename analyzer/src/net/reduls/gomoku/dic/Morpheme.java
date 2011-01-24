@@ -6,11 +6,15 @@ import net.reduls.gomoku.util.Misc;
 public final class Morpheme {
     public static final class Info {
         public final short cost;
-        public final String feature;
+        public final short posId;
 
         public Info(short posId, short cost) {
             this.cost = cost;
-            this.feature = PartsOfSpeech.get(posId);
+            this.posId = posId;
+        }
+        
+        public String feature() {
+            return PartsOfSpeech.get(posId);
         }
     }
 

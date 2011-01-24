@@ -11,6 +11,8 @@ public final class Unknown {
         
         if(result.isEmpty()==false && ct.invoke==false)
             return;
+        
+        System.out.println("IN: "+ct.length+","+ct.invoke+","+ct.id+","+result.size());
 
         final boolean isSpace = ct==space;
         final int limit = Math.min(text.length(), ct.length+start);

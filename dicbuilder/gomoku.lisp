@@ -45,7 +45,7 @@
 (defun parse-char-category (char.def &aux categorys)
   (each-char-category (name) char.def 
     (push (intern (symbol-name name) :keyword) categorys))
-  categorys)
+  (nreverse categorys))
   
 (defun build-char-category (char.def category.bin)
   (with-open-file (out category.bin :direction :output :if-exists :supersede :element-type 'octet)
