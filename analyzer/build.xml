@@ -22,6 +22,11 @@
         <include name="*.bin" />
       </fileset>
     </copy>
+    <copy todir="${classes.dir}">
+      <fileset dir="${src.dir}/../..">
+        <include name="COPYING*" />
+      </fileset>
+    </copy>
   </target>
 
   <target name="javadoc">
