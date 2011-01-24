@@ -1,9 +1,13 @@
-(defpackage double-array
+(defpackage gomoku.trie.double-array
   (:use :common-lisp :gomoku.util)
   (:export build
            load-dic
            get-id))
-(in-package :double-array)
+(in-package :gomoku.trie.double-array)
+
+(package-alias :gomoku.trie :trie)
+(package-alias :gomoku.trie.code-stream :code-stream)
+(package-alias :gomoku.trie.node-allocator :node-allocator)
 
 (deftype uint1 () '(unsigned-byte 8))
 (deftype uint2 () '(unsigned-byte 16))
@@ -169,3 +173,7 @@
                  (next (+ (base nodes node) arc)))
             (when (= (chck nodes next) arc)
               (recur next (inc-id id nodes node)))))))))
+
+(package-alias :gomoku.trie)
+(package-alias :gomoku.trie.code-stream)
+(package-alias :gomoku.trie.node-allocator)

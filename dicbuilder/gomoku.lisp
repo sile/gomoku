@@ -1,5 +1,8 @@
 (in-package :gomoku)
 
+(package-alias :gomoku.trie :trie)
+(package-alias :gomoku.trie.double-array :double-array)
+
 (defun build-matrix (matrix.def matrix.bin)
   (declare #.*fastest*)
   (with-open-file (in matrix.def :external-format *text-dictionary-charset*)
@@ -182,3 +185,6 @@
         (build-morp #P"unk.def" (out-path "morpheme.bin")))))
   (format *error-output* ";~%; done~%")
   'done)
+
+(package-alias :gomoku.trie)
+(package-alias :gomoku.trie.double-array)

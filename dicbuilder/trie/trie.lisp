@@ -1,11 +1,11 @@
-(defpackage trie
+(defpackage gomoku.trie
   (:use :common-lisp :gomoku.util)
   (:export build
            node-options
            collect-children))
-(in-package :trie)
+(in-package :gomoku.trie)
 
-(package-alias :code-stream :stream)
+(package-alias :gomoku.trie.code-stream :stream)
 
 (declaim #.gomoku::*fastest*)
 (deftype positive-fixnum () '(integer 0 #.most-positive-fixnum))
@@ -139,3 +139,5 @@
     (push child acc)
     FINALLY
     (return acc)))
+
+(package-alias :gomoku.trie.code-stream)

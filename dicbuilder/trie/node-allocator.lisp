@@ -1,8 +1,8 @@
-(defpackage node-allocator
+(defpackage gomoku.trie.node-allocator
   (:use :common-lisp)
   (:export make
            allocate))
-(in-package :node-allocator)
+(in-package :gomoku.trie.node-allocator)
 
 (declaim (inline can-allocate? allocate-impl))
 

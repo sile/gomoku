@@ -1,5 +1,5 @@
 ;;;; TODO: サロゲートペア対応
-(defpackage code-stream
+(defpackage gomoku.trie.code-stream
   (:use :common-lisp :gomoku)
   (:shadow :common-lisp read peek)
   (:export code-stream
@@ -8,7 +8,7 @@
            peek
            eat
            read))
-(in-package :code-stream)
+(in-package :gomoku.trie.code-stream)
 
 (declaim (inline make-code-stream make eos? peek eat read))
 
