@@ -49,7 +49,7 @@
   (with-slots (nexts base-used?) (the alloca alloca)
     (loop WITH first = (the fixnum (first codes))
           FOR cur = (the fixnum (aref nexts 0)) THEN (aref nexts cur)
-          FOR base = (- cur first)
+          FOR base OF-TYPE fixnum = (- cur first)
           WHEN (>= base 0)
       DO
       (when (and (= (bit base-used? base) 0)

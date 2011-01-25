@@ -5,6 +5,7 @@
            get-id))
 (in-package :gomoku.trie.double-array)
 
+(package-alias :pairing-heap :heap)
 (package-alias :gomoku.trie :trie)
 (package-alias :gomoku.trie.code-stream :code-stream)
 (package-alias :gomoku.trie.node-allocator :node-allocator)
@@ -48,34 +49,42 @@
 (defun set-base (da node-idx base-idx)
   (setf (aref (da-base da) node-idx) base-idx))
 
-(defun build-impl (trie alloca da node-idx memo code-map cur-code)
+(defun build-impl (trie alloca da code-map)
   (declare #.gomoku::*fastest*
-           ((simple-array uint2) code-map)
-           (uint2 cur-code))
-  (a.if #1=(gethash (trie::node-child trie) memo)
-        (progn 
+           ((simple-array uint2) code-map))
+  (let ((memo (make-hash-table :test #'eq))
+        (cur-code 0)
+        (queue (heap:make :test (lambda (a b) (> (the fixnum (first a))
+                                                 (the fixnum (first b))))))
+        (children (trie:collect-children trie)))
+    (declare (uint2 cur-code))
+    (heap:push `(,(length children) ,children ,trie 0) queue)
+    
+    (loop UNTIL (heap:empty? queue)
+          FOR (_ children trie node-idx) = (heap:pop queue)
+      DO
+      (a.if #1=(gethash (trie::node-child trie) memo)
+            (progn 
+              (set-opts da node-idx (trie:node-options trie))
+              (set-base da node-idx it))
+        (flet ((get-code (child)
+                 (when (= 0 #2=(aref code-map (trie::node-label child)))
+                   (setf #2# (incf cur-code)))
+                 (the uint2 #2#)))
+          (declare (inline get-code))
           (set-opts da node-idx (trie:node-options trie))
-          (set-base da node-idx it))
-    (let ((children (trie:collect-children trie)))
-      (flet ((get-code (child)
-               (when (= 0 #2=(aref code-map (trie::node-label child)))
-                 (setf #2# (incf cur-code)))
-               (the uint2 #2#)))
-        (declare (inline get-code))
-        (set-opts da node-idx (trie:node-options trie))
-        (when children
-          (let ((base-idx (node-allocator:allocate 
-                           alloca
-                           (mapcar #'get-code children))))
-            (declare (uint3 base-idx))
-            (setf #1# base-idx)
-            (set-base da node-idx base-idx)
-            (dolist (child children)
-              (setf cur-code 
-                    (build-impl child alloca da
-                                (set-chck da base-idx (get-code child))
-                                memo code-map cur-code))))))))
-  cur-code)
+          (when children
+            (let ((base-idx (node-allocator:allocate 
+                             alloca
+                             (mapcar #'get-code children))))
+              (declare (uint3 base-idx))
+              (setf #1# base-idx)
+              (set-base da node-idx base-idx)
+              (dolist (child children)
+                (let ((grand-children (trie:collect-children child)))
+                  (heap:push `(,(length grand-children) ,grand-children ,child
+                               ,(set-chck da base-idx (get-code child)))
+                             queue))))))))))
 
 (defun adjust (da)
   (with-slots (base chck opts) da
@@ -89,11 +98,9 @@
 (defun build-from-trie (trie output-dir &aux (limit (node-count-limit trie)))
   (let ((da (init-da limit))
         (code-map (make-array #x10000 :initial-element 0 :element-type 'uint2))
-        (cur-code 0)
         (*default-pathname-defaults* (probe-file output-dir)))
 
-    (build-impl trie (node-allocator:make limit) da 0 
-                (make-hash-table :test #'eq) code-map cur-code)
+    (build-impl trie (node-allocator:make limit) da code-map)
     (adjust da)
 
     (with-slots (base chck opts) da
@@ -174,6 +181,7 @@
             (when (= (chck nodes next) arc)
               (recur next (inc-id id nodes node)))))))))
 
+(package-alias :pairing-heap)
 (package-alias :gomoku.trie)
 (package-alias :gomoku.trie.code-stream)
 (package-alias :gomoku.trie.node-allocator)

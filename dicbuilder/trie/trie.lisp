@@ -96,7 +96,7 @@
 (defun unique (keys)
   (loop FOR (prev cur) ON keys
         WHILE cur
-        UNLESS (string= prev cur)
+        UNLESS (string= (the simple-string prev) (the simple-string cur))
     COLLECT cur INTO list
     FINALLY
     (return (cons (first keys) list))))
@@ -130,6 +130,7 @@
   (with-slots (terminal? child-total) (the node node)
     (the fixnum (+ (if terminal? 1 0) child-total))))
         
+(declaim (ftype (function (node) list) collect-children))
 (defun collect-children (node)
   (loop WITH acc = '()
         FOR child = (node-child node)
