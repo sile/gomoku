@@ -9,9 +9,7 @@ public final class PartsOfSpeech {
     private static final String[] posArray;
     
     static {
-        BufferedReader in = 
-            new BufferedReader 
-            (new InputStreamReader(Misc.openDictionaryData("pos.bin")));
+        BufferedReader in = Misc.openDictionaryDataAsBR("pos.bin");
         ArrayList<String> lines = new ArrayList<String>();
 
         for(String line=Misc.readLine(in); line!=null; line=Misc.readLine(in))
