@@ -24,18 +24,16 @@ public final class Morpheme {
         DataInputStream in1 = Misc.openDictionaryDataAsDIS("id-morphemes-map.bin");
         DataInputStream in2 = Misc.openDictionaryDataAsDIS("morpheme.bin");
 
-        final int surfaceIdLimit = Misc.readInt(in1)-1;
+        final int surfaceIdLimit = Misc.readInt(in1);
         final int morphemeCount = Misc.readInt(in2);
         surId_to_morps = new Info[surfaceIdLimit][];
 
-        int start = Misc.readInt(in1);
         for(int i=0; i < surfaceIdLimit; i++) {
-            final int end = Misc.readInt(in1);
-            final Info[] morps = new Info[end-start];
-            for(int j=0; j < (end-start); j++)
+            final byte length = Misc.readByte(in1);
+            final Info[] morps = new Info[length];
+            for(int j=0; j < length; j++)
                 morps[j] = new Info(Misc.readShort(in2), Misc.readShort(in2));
             surId_to_morps[i] = morps;
-            start = end;
         }
         
         Misc.close(in1);

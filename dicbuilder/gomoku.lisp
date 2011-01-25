@@ -151,14 +151,11 @@
       (with-open-file (out (merge-pathnames "id-morphemes-map.bin" morp.bin)
                            :direction :output :if-exists :supersede
                            :element-type 'octet)
-        (write-int (1+ (length ms)) out :width 4)
-        (loop WITH offset = 0
-              FOR vs ACROSS ms
+        (write-int (length ms) out :width 4)
+        (loop FOR vs ACROSS ms
           DO
-          (write-int offset out :width 4)
-          (incf offset (length vs))
-          FINALLY
-          (write-int offset out :width 4))))))
+          (assert (< (length vs) #x80))
+          (write-int (length vs) out))))))
 
 (defun build-dic (text-dic-dir output-dir)
   (format *error-output* "; = BUILD DICTIONARY =~%")
