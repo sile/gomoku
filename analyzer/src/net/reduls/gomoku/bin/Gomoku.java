@@ -5,9 +5,6 @@ import net.reduls.gomoku.Tagger;
 import net.reduls.gomoku.Morpheme;
 import net.reduls.gomoku.util.ReadLine;
 
-/**
- * 形態素解析コマンド
- */
 public final class Gomoku {
     public static void main(String[] args) throws IOException {
         if(!(args.length==0 || (args.length==1 && args[0].equals("-wakati")))) {
@@ -21,8 +18,8 @@ public final class Gomoku {
 	if(doWakati)
 	    for(String s=rl.read(); s != null; s=rl.read()) {
 		for(String w : Tagger.wakati(s))
-		    ;//System.out.print(w+" ");
-		//System.out.println("");
+		    System.out.print(w+" ");
+		System.out.println("");
 	    }
 	else
 	    for(String s=rl.read(); s != null; s=rl.read()) {

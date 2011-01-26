@@ -25,17 +25,13 @@ public final class SurfaceId {
         }
     }
  
-   public static interface Callback {
-        void call(int start, int end, int surfaceId);
-    }
-
-    public static void eachCommonPrefix(String text, int start, Callback fn) {
+    public static void eachCommonPrefix(String text, int start, WordDic.Callback fn) {
         int node = 0;
         int id = idOffset;
         
         for(int i=start;; i++) {
             if(isTerminal(node))
-                fn.call(start, i, id++);
+                WordDic.eachViterbiNode(fn, id++, start, i-start, false);
             
             if(i==text.length())
                 return;

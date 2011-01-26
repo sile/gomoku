@@ -16,7 +16,7 @@ public final class Unknown {
         final int limit = Math.min(text.length(), ct.length+start);
         int i=start;
         for(; i < limit; i++) {
-            WordDic.search(ct.id, start, (i-start)+1, isSpace, fn);
+            WordDic.eachViterbiNode(fn, ct.id, start, (i-start)+1, isSpace);
             if(i+1!=limit && Char.isCompatible(ch, text.charAt(i+1))==false)
                 return;
         }
@@ -24,10 +24,10 @@ public final class Unknown {
         if(ct.group && i < text.length()) {
             for(; i < text.length(); i++)
                 if(Char.isCompatible(ch, text.charAt(i)) == false) {
-                    WordDic.search(ct.id, start, i-start, isSpace, fn);
+                    WordDic.eachViterbiNode(fn, ct.id, start, i-start, isSpace);
                     return;
                 }
-            WordDic.search(ct.id, start, text.length()-start, isSpace, fn);
+            WordDic.eachViterbiNode(fn, ct.id, start, text.length()-start, isSpace);
         }
     }
 }

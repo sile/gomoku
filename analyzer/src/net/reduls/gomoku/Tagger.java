@@ -37,27 +37,6 @@ public final class Tagger {
         return result;
     }
     
-    private static final class Fn implements WordDic.Callback {
-        private ArrayList<ArrayList<ViterbiNode>> nodesAry;
-        private final int i;
-        private final ArrayList<ViterbiNode> prevs;
-        private boolean first=true;
-
-        public Fn(ArrayList<ArrayList<ViterbiNode>> nodesAry, int i) {
-            this.nodesAry = nodesAry;
-            this.i = i;
-            prevs = nodesAry.get(i);
-        }
-        public void call(ViterbiNode vn) {
-            first=false;
-            if(vn.isSpace)
-                nodesAry.get(i+vn.length).addAll(prevs);
-            else
-                nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
-        }
-        public boolean isEmpty() { return first; }
-    }
-
     public static ViterbiNode parseImpl(String text) {
         final int len = text.length();
         final ArrayList<ArrayList<ViterbiNode>> nodesAry = 
@@ -67,9 +46,10 @@ public final class Tagger {
         for(int i=1; i <= len; i++)
             nodesAry.add(new ArrayList<ViterbiNode>());
         
+        MakeLattice fn = new MakeLattice(nodesAry);
         for(int i=0; i < len; i++) {
             if(nodesAry.get(i).isEmpty()==false) {
-                Fn fn = new Fn(nodesAry,i);
+                fn.set(i);
                 WordDic.search(text, i, fn);
                 Unknown.search(text, i, fn);
             }
@@ -103,5 +83,32 @@ public final class Tagger {
         vn.cost += minCost;
         
         return vn;
+    }
+
+    private static final class MakeLattice implements WordDic.Callback {
+        private final ArrayList<ArrayList<ViterbiNode>> nodesAry;
+        private int i;
+        private ArrayList<ViterbiNode> prevs;
+        private boolean empty=true;
+
+        public MakeLattice(ArrayList<ArrayList<ViterbiNode>> nodesAry) {
+            this.nodesAry = nodesAry;
+        }
+        
+        public void set(int i) {
+            this.i = i;
+            prevs = nodesAry.get(i);
+            empty = true;
+        }
+
+        public void call(ViterbiNode vn) {
+            empty=false;
+            if(vn.isSpace)
+                nodesAry.get(i+vn.length).addAll(prevs);
+            else
+                nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
+        }
+        
+        public boolean isEmpty() { return empty; }
     }
 }
