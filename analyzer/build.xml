@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="gomoku" default="jar"  basedir=".">
-  <property name="version" value="0.0.3" />
+  <property name="version" value="0.0.4" />
   <property name="src.dir" value="src"/>
   <property name="classes.dir" value="classes"/>
   <property name="javadoc.dir" value="docs"/>

@@ -36,29 +36,41 @@ public final class Tagger {
         return result;
     }
     
+    private static final class Fn implements WordDic.Callback {
+        private ArrayList<ArrayList<ViterbiNode>> nodesAry;
+        private final int i;
+        private final ArrayList<ViterbiNode> prevs;
+        private boolean first=true;
+
+        public Fn(ArrayList<ArrayList<ViterbiNode>> nodesAry, int i) {
+            this.nodesAry = nodesAry;
+            this.i = i;
+            prevs = nodesAry.get(i);
+        }
+        public void call(ViterbiNode vn) {
+            first=false;
+            if(vn.isSpace)
+                nodesAry.get(i+vn.length).addAll(prevs);
+            else
+                nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
+        }
+        public boolean isEmpty() { return first; }
+    }
+
     public static ViterbiNode parseImpl(String text) {
         final int len = text.length();
         final ArrayList<ArrayList<ViterbiNode>> nodesAry = 
             new ArrayList<ArrayList<ViterbiNode>>(len+1);
-        final ArrayList<ViterbiNode> perResult = new ArrayList<ViterbiNode>();
-
+        
         nodesAry.add(BOS_NODES);
         for(int i=1; i <= len; i++)
             nodesAry.add(new ArrayList<ViterbiNode>());
         
-        for(int i=0; i < len; i++, perResult.clear()) {
+        for(int i=0; i < len; i++) {
             if(nodesAry.get(i).isEmpty()==false) {
-                WordDic.search(text, i, perResult);
-                Unknown.search(text, i, perResult);
-            
-                final ArrayList<ViterbiNode> prevs = nodesAry.get(i);
-                for(int j=0; j < perResult.size(); j++) {
-                    final ViterbiNode vn = perResult.get(j);
-                    if(vn.isSpace)
-                        nodesAry.get(i+vn.length).addAll(prevs);
-                    else
-                        nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
-                }
+                Fn fn = new Fn(nodesAry,i);
+                WordDic.search(text, i, fn);
+                Unknown.search(text, i, fn);
             }
         }
 
