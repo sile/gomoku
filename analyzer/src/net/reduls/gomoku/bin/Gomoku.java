@@ -21,8 +21,8 @@ public final class Gomoku {
 	if(doWakati)
 	    for(String s=rl.read(); s != null; s=rl.read()) {
 		for(String w : Tagger.wakati(s))
-		    System.out.print(w+" ");
-		System.out.println("");
+		    ;//System.out.print(w+" ");
+		//System.out.println("");
 	    }
 	else
 	    for(String s=rl.read(); s != null; s=rl.read()) {

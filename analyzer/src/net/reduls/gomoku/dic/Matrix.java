@@ -15,12 +15,12 @@ public final class Matrix {
         
         for(int l=0; l < leftNum; l++) 
             for(int r=0; r < rightNum; r++)
-                matrix[l][r] = Misc.readShort(in);
+                matrix[r][l] = Misc.readShort(in);
 
         Misc.close(in);
     }
 
     public static short linkCost(int leftId, int rightId) {
-        return matrix[leftId][rightId];
+        return matrix[rightId][leftId];
     }
 }
