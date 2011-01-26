@@ -12,10 +12,6 @@ public final class Morpheme {
             this.cost = cost;
             this.posId = posId;
         }
-        
-        public String feature() {
-            return PartsOfSpeech.get(posId);
-        }
     }
 
     private static final Info[][] surId_to_morps;

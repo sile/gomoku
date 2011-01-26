@@ -1,22 +1,24 @@
 package net.reduls.gomoku.dic;
 
 public final class ViterbiNode {
-    public int cost = 0;
+    public int cost;
     public ViterbiNode prev = null;
     
-    public final Morpheme.Info word;
     public final int start;
     public final short length;
+    public final short posId;
     public final boolean isSpace;
     
-    public ViterbiNode(int start, short length, Morpheme.Info word, boolean isSpace) {
+    public ViterbiNode(int start, short length, short wordCost, short posId, boolean isSpace) {
+        this.cost = wordCost;
+        
         this.start = start;
         this.length = length;
-        this.word = word;
+        this.posId = posId;
         this.isSpace = isSpace;
     }
 
     public static ViterbiNode makeBOSEOS() {
-        return new ViterbiNode(0, (short)0, new Morpheme.Info((short)0,(short)0), false);
+        return new ViterbiNode(0, (short)0, (short)0, (short)0, false);
     }
 }

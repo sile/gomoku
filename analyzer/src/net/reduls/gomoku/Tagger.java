@@ -6,6 +6,7 @@ import net.reduls.gomoku.dic.ViterbiNode;
 import net.reduls.gomoku.dic.WordDic;
 import net.reduls.gomoku.dic.Unknown;
 import net.reduls.gomoku.dic.Matrix;
+import net.reduls.gomoku.dic.PartsOfSpeech;
 
 public final class Tagger {
     private static final ArrayList<ViterbiNode> BOS_NODES = new ArrayList<ViterbiNode>(1);
@@ -20,7 +21,7 @@ public final class Tagger {
     public static List<Morpheme> parse(String text, List<Morpheme> result) {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev) {
             final String surface = text.substring(vn.start, vn.start+vn.length);
-            final String feature = vn.word.feature();
+            final String feature = PartsOfSpeech.get(vn.posId);
             result.add(new Morpheme(surface, feature, vn.start));
         }
         return result;
@@ -88,18 +89,19 @@ public final class Tagger {
 
     private static ViterbiNode setMincostNode(ViterbiNode vn, ArrayList<ViterbiNode> prevs) {
         final ViterbiNode f = vn.prev = prevs.get(0);
-        vn.cost = f.cost + Matrix.linkCost(f.word.posId, vn.word.posId);
+        int minCost = f.cost + Matrix.linkCost(f.posId, vn.posId);
         
         for(int i=1; i < prevs.size(); i++) {
             final ViterbiNode p = prevs.get(i);
-            final int cost = p.cost + Matrix.linkCost(p.word.posId, vn.word.posId);
+            final int cost = p.cost + Matrix.linkCost(p.posId, vn.posId);
 
-            if(cost < vn.cost) {
-                vn.cost = cost;
+            if(cost < minCost) {
+                minCost = cost;
                 vn.prev = p;
             }
         }
-        vn.cost += vn.word.cost;
+        vn.cost += minCost;
+        
         return vn;
     }
 }

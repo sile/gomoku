@@ -35,7 +35,8 @@ public final class WordDic {
         for(int i=0; i < mis.length; i++)
             fn.call(new ViterbiNode(start,
                                     (short)length,
-                                    mis[i],
+                                    mis[i].cost,
+                                    mis[i].posId,
                                     isSpace));        
     }
 }

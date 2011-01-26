@@ -28,31 +28,14 @@ public final class SurfaceId {
    public static interface Callback {
         void call(int start, int end, int surfaceId);
     }
- 
-    public static int get(String surface) {
-        int node = 0;
-        int id = idOffset-1;
-        
-        for(int i=0;; i++) {
-            if(i==surface.length())
-                return isTerminal(node) ? incId(id,node) : -1;
-
-            final char arc = Char.code(surface.charAt(i));
-            final int next = base(node)+arc;
-            if(chck(next) != arc)
-                return -1;
-            id = incId(id, node);
-            node = next;
-        }
-    }
 
     public static void eachCommonPrefix(String text, int start, Callback fn) {
         int node = 0;
-        int id = idOffset-1;
+        int id = idOffset;
         
         for(int i=start;; i++) {
             if(isTerminal(node))
-                fn.call(start, i, incId(id,node));
+                fn.call(start, i, id++);
             
             if(i==text.length())
                 return;
@@ -61,8 +44,8 @@ public final class SurfaceId {
             final int next = base(node)+arc;
             if(chck(next) != arc)
                 return;
-            id = incId(id, node);
             node = next;
+            id += siblingTotal(node);
         }
     }
 
@@ -80,9 +63,5 @@ public final class SurfaceId {
 
     private static int siblingTotal(int node) {
         return (int)(nodes[node]>>41);
-    }
-
-    private static int incId(int id, int node) {
-        return id + (isTerminal(node) ? 1 : 0) + siblingTotal(node);
     }
 }

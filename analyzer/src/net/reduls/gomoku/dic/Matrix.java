@@ -20,7 +20,7 @@ public final class Matrix {
         Misc.close(in);
     }
 
-    public static short linkCost(int leftId, int rightId) {
+    public static short linkCost(short leftId, short rightId) {
         return matrix[rightId][leftId];
     }
 }
