@@ -7,6 +7,7 @@ import net.reduls.gomoku.dic.WordDic;
 import net.reduls.gomoku.dic.Unknown;
 import net.reduls.gomoku.dic.Matrix;
 import net.reduls.gomoku.dic.PartsOfSpeech;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class Tagger {
     private static final ArrayList<ViterbiNode> BOS_NODES = new ArrayList<ViterbiNode>(1);
@@ -48,12 +49,12 @@ public final class Tagger {
         
         MakeLattice fn = new MakeLattice(nodesAry);
         for(int i=0; i < len; i++) {
-            if(nodesAry.get(i).isEmpty()==false) {
-                fn.set(i);
-                WordDic.search(text, i, fn);
-                Unknown.search(text, i, fn);
-            }
+            fn.set(i);
+            WordDic.search(text, i, fn);
+            Unknown.search(text, i, fn);
         }
+        que.add(End);
+        while(!que.isEmpty());
 
         ViterbiNode cur = setMincostNode(ViterbiNode.makeBOSEOS(), nodesAry.get(len)).prev;
 
@@ -105,10 +106,47 @@ public final class Tagger {
             empty=false;
             if(vn.isSpace)
                 nodesAry.get(i+vn.length).addAll(prevs);
-            else
-                nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
+            else {
+                que.add(new Tuple(nodesAry.get(i+vn.length),vn,prevs));
+            }
         }
         
         public boolean isEmpty() { return empty; }
+    }
+
+    private static final ConcurrentLinkedQueue<Tuple> que = new ConcurrentLinkedQueue<Tuple>();
+
+    private static final class Tuple {
+        private final ArrayList<ViterbiNode> ends;
+        private final ViterbiNode vn;
+        private final ArrayList<ViterbiNode> prevs;
+        
+        public Tuple(ArrayList<ViterbiNode> ends, ViterbiNode vn, ArrayList<ViterbiNode> prevs) {
+            this.ends = ends;
+            this.vn = vn;
+            this.prevs = prevs;
+        }
+    }
+    
+    private static final Tuple End = new Tuple(null,null,null);
+
+    private static final class CostCalcThread extends Thread {
+        public void run() {
+            for(;;) {
+                Tuple o = que.poll();
+                if(o==null) 
+                    continue;
+                
+                if(o!=End)
+                    if(o.prevs.isEmpty()==false)
+                        o.ends.add(setMincostNode(o.vn, o.prevs));
+            }
+         }
+    }
+
+    static {
+        CostCalcThread d = new CostCalcThread();
+        d.setDaemon(true);
+        d.start();
     }
 }
