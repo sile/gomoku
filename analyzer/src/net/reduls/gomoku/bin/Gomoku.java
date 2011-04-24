@@ -24,7 +24,7 @@ public final class Gomoku {
 	else
 	    for(String s=rl.read(); s != null; s=rl.read()) {
 		for(Morpheme m : Tagger.parse(s))
-		    System.out.println(m.surface+"\t"+m.feature);
+                    System.out.println(m.surface+"\t"+m.feature);
 		System.out.println("EOS");
 	    }
     }   

@@ -13,33 +13,40 @@ public final class ParallelTagger {
     private final List<Thread> consumerThreads;
     private final BlockingQueue<Sentence> sentenceQueue;
     private final BlockingQueue<MorphemesWithId> morphemeQueue;
-
+    private final static int CORE_NUM = Runtime.getRuntime().availableProcessors();
+    
     public ParallelTagger() {
-        final int coreNum = Runtime.getRuntime().availableProcessors();
+        sentenceQueue = new ArrayBlockingQueue<Sentence>(CORE_NUM*5);
+        morphemeQueue = new PriorityBlockingQueue<MorphemesWithId>();
+
         consumerThreads = new ArrayList<Thread>();
-        for(int i=0; i < coreNum; i++) {
+        for(int i=0; i < CORE_NUM; i++) {
+            //System.err.println("#IN: "+i);
             Thread t = new ConsumerThread();
             t.setDaemon(true);
             consumerThreads.add(t);
+            t.start();
+            //System.err.println("#OUT: "+i);
         }
-    
-        sentenceQueue = new ArrayBlockingQueue<Sentence>(coreNum*5);
-        morphemeQueue = new PriorityBlockingQueue<MorphemesWithId>();
     }
     
-    public ParallelResult parse(Iterator<String> sentenceIterator) {
-        return new ParallelResult(sentenceIterator);
+    public Result parse(Iterator<String> sentenceIterator) {
+        return new Result(sentenceIterator);
     }
 
-    public final class ParallelResult implements Iterator<List<Morpheme>> {
+    public final class Result implements Iterator<List<Morpheme>>, Iterable<List<Morpheme>> {
         private int curId = 0;
         
-        public ParallelResult(Iterator<String> sentenceIterator) {
+        public Result(Iterator<String> sentenceIterator) {
             morphemeQueue.clear();
             
             Thread producer = new ProducerThread(sentenceIterator);
             producer.setDaemon(true);
-            producer.run();
+            producer.start();
+        }
+        
+        public Iterator<List<Morpheme>> iterator() {
+            return this;
         }
 
         public boolean hasNext() {
@@ -76,7 +83,7 @@ public final class ParallelTagger {
             return id - s.id;
         }
     }
-    private static final MorphemesWithId NullMorphemes = new MorphemesWithId(-1,null);
+    private static final MorphemesWithId NullMorphemes = new MorphemesWithId(Integer.MAX_VALUE,null);
 
     private final static class MorphemesWithId implements Comparable<MorphemesWithId> { 
         final public int id;
@@ -103,7 +110,9 @@ public final class ParallelTagger {
             int id = 0;
             while(sentenceIterator.hasNext())
                 try {
-                    sentenceQueue.put(new Sentence(id++, sentenceIterator.next()));
+                    String s = sentenceIterator.next();
+                    sentenceQueue.put(new Sentence(id++, s/*sentenceIterator.next()*/));
+                    //System.err.println("#PUT "+s);
                 } catch (Exception e) {}
             sentenceQueue.add(NullSentence);
         }
@@ -113,13 +122,16 @@ public final class ParallelTagger {
         public void run() {
             for(;;) {
                 try {
+                    //System.err.println("# RUN: "+sentenceQueue);
                     Sentence s = sentenceQueue.take();
+                    //System.err.println("#GET: "+s.sentence);
                     if(s==NullSentence) {
                         morphemeQueue.put(NullMorphemes);
                     } else {
                         morphemeQueue.put(new MorphemesWithId(s.id, Tagger.parse(s.sentence)));
                     }
                 } catch(Exception e) {
+                    System.err.println(e);
                 }
             }
         }
