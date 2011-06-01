@@ -110,8 +110,7 @@
         (push (list pos-id cost) (gethash morp-id morps))))
     morps))
 
-(defun collect-morp (morps outdir &aux (da (double-array:load-dic 
-                                            (merge-pathnames #P"surface-id.bin" outdir))))
+(defun collect-morp (morps outdir &aux (da (double-array:load-dic outdir)))
   (let ((offset (length (parse-char-category #P"char.def"))))
     (dolist (csv (directory #P"*.csv"))
       (each-morpheme (surface pos-id cost) csv
@@ -132,7 +131,7 @@
 
 (defun build-morp (unk.def morp.bin)
   (let ((morps (collect-unk-morp unk.def)))
-    (collect-morp morps morp.bin)
+    (collect-morp morps (directory-namestring morp.bin))
 
     (let ((ms (make-array (hash-table-count morps) :initial-element '())))
       (maphash (lambda (morp-id vs)
