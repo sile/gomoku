@@ -123,7 +123,7 @@
       (write-int (length code-map) out :width 4)
       (loop FOR c ACROSS code-map
             DO
-            (gomoku::write-int c out :width 2)))))
+            (write-int c out :width 2)))))
 
 (defun build (text-dic-dir output-dir)
   (build-from-trie (trie:build text-dic-dir) output-dir))

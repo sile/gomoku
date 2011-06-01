@@ -102,11 +102,9 @@
     (return (cons (first keys) list))))
         
 (defun collect-keys (&aux keys)
-  (dolist (csv (directory #P"*.csv"))
-    (each-line (line csv)
-      (push (subseq line 0 (position #\, line))
-            keys)))
-  (unique (sort keys #'string<)))
+  (each-line (line "/home/ohta/data/dic/LgmnEn/title.uniq")
+    (push line keys))
+  keys)
 
 (defun build (text-dic-dir)
   (let ((*default-pathname-defaults* (probe-file text-dic-dir))
