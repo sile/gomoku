@@ -5,14 +5,13 @@ import net.reduls.gomoku.util.Misc;
 
 public final class SurfaceId {
     private static final int idOffset;
-    private static final int nodeCount;
     private static final long[] nodes;
     
     static {
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin");
             
-            nodeCount = Misc.readInt(in);
+            final int nodeCount = Misc.readInt(in);
             nodes = new long[nodeCount];
             for(int i=0; i < nodeCount; i++)
                 nodes[i] = Misc.readLong(in);
