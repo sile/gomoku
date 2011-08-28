@@ -11,12 +11,13 @@ public final class SurfaceId {
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin");
             
-            final int nodeCount = Misc.readInt(in);
-            final int extCount = Misc.readInt(in);  // XXX: unused
-            
+            final int nodeCount = Misc.readInt(in)/8;
+            final int extCount = Misc.readInt(in)/4;  // XXX: unused
+
             nodes = new long[nodeCount];
-            for(int i=0; i < nodeCount; i++)
+            for(int i=0; i < nodeCount; i++) {
                 nodes[i] = Misc.readLong(in);
+            }
             Misc.close(in);
         }
         {
@@ -33,7 +34,7 @@ public final class SurfaceId {
         final CodeStream in = new CodeStream(text,start);
         for(;;) {
             if(isTerminal(node))
-                WordDic.eachViterbiNode(fn, id++, start, in.position(), false);
+                WordDic.eachViterbiNode(fn, id++, start, in.position()-start, false);
             
             if(in.isEos())
                 return;
