@@ -130,7 +130,8 @@
 
 (defun build-morp (unk.def morp.bin)
   (let ((morps (collect-unk-morp unk.def)))
-    (collect-morp morps (trie:load (merge-pathnames #P"surface-id.bin" morp.bin)))
+    (collect-morp morps (trie:load (merge-pathnames #P"surface-id.bin" morp.bin)
+                                   :byte-order :big))
     (let ((ms (make-array (hash-table-count morps) :initial-element '())))
       (maphash (lambda (morp-id vs)
                  (setf (aref ms morp-id) (delete-unused-morp vs)))
@@ -189,7 +190,8 @@
       (with-time "code-category"
         (build-code-category #P"char.def" (out-path #P"code.bin")))
       (with-time "surface-id"
-        (trie:build :input (collect-keyset) :output (out-path #P"surface-id.bin")))
+        (trie:build :input (collect-keyset) :output (out-path #P"surface-id.bin") 
+                    :byte-order :big))
       (with-time "morpheme"
         (build-morp #P"unk.def" (out-path "morpheme.bin")))))
   (format *error-output* ";~%; done~%")
