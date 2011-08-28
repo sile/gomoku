@@ -1,7 +1,6 @@
 (in-package :gomoku)
 
-(package-alias :gomoku.trie :trie)
-(package-alias :gomoku.trie.double-array :double-array)
+(package-alias :dawg :trie)
 
 (defun build-matrix (matrix.def matrix.bin)
   (declare #.*fastest*)
@@ -110,11 +109,11 @@
         (push (list pos-id cost) (gethash morp-id morps))))
     morps))
 
-(defun collect-morp (morps outdir &aux (da (double-array:load-dic outdir)))
+(defun collect-morp (morps da)
   (let ((offset (length (parse-char-category #P"char.def"))))
     (dolist (csv (directory #P"*.csv"))
       (each-morpheme (surface pos-id cost) csv
-        (let ((morp-id (double-array:get-id surface da)))
+        (let ((morp-id (trie:get-id surface da)))
           (assert morp-id)
           (push (list pos-id cost) (gethash (+ offset morp-id) morps))))))
   morps)
@@ -131,8 +130,7 @@
 
 (defun build-morp (unk.def morp.bin)
   (let ((morps (collect-unk-morp unk.def)))
-    (collect-morp morps (directory-namestring morp.bin))
-
+    (collect-morp morps (trie:load (merge-pathnames #P"surface-id.bin" morp.bin)))
     (let ((ms (make-array (hash-table-count morps) :initial-element '())))
       (maphash (lambda (morp-id vs)
                  (setf (aref ms morp-id) (delete-unused-morp vs)))
@@ -156,6 +154,21 @@
           (assert (< (length vs) #x80))
           (write-int (length vs) out))))))
 
+(defun unique (keys)
+  (loop FOR (prev cur) ON keys
+        WHILE cur
+        UNLESS (string= (the simple-string prev) (the simple-string cur))
+    COLLECT cur INTO list
+    FINALLY
+    (return (cons (first keys) list))))
+
+(defun collect-keyset (&aux keys)
+  (dolist (csv (directory #P"*.csv"))
+    (each-line (line csv)
+      (push (subseq line 0 (position #\, line))
+            keys)))
+  (unique (sort keys #'string<)))
+
 (defun build-dic (text-dic-dir output-dir)
   (format *error-output* "; = BUILD DICTIONARY =~%")
   (format *error-output* "; source text dictionary:   ~A~%" text-dic-dir)
@@ -168,19 +181,18 @@
     (flet ((out-path (filename)
              (merge-pathnames filename output-dir)))
       (with-time "matrix" 
-                 (build-matrix #P"matrix.def" (out-path #P"matrix.bin")))
+        (build-matrix #P"matrix.def" (out-path #P"matrix.bin")))
       (with-time "parts-of-speech" 
-                 (build-pos #P"left-id.def" (out-path #P"pos.bin")))
+        (build-pos #P"left-id.def" (out-path #P"pos.bin")))
       (with-time "char-category" 
-                 (build-char-category #P"char.def" (out-path #P"category.bin")))
+        (build-char-category #P"char.def" (out-path #P"category.bin")))
       (with-time "code-category"
-                 (build-code-category #P"char.def" (out-path #P"code.bin")))
+        (build-code-category #P"char.def" (out-path #P"code.bin")))
       (with-time "surface-id"
-                 (double-array:build *default-pathname-defaults* output-dir))
+        (trie:build :input (collect-keyset) :output (out-path #P"surface-id.bin")))
       (with-time "morpheme"
         (build-morp #P"unk.def" (out-path "morpheme.bin")))))
   (format *error-output* ";~%; done~%")
   'done)
 
-(package-alias :gomoku.trie)
-(package-alias :gomoku.trie.double-array)
+(package-alias :dawg)
