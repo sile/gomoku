@@ -29,15 +29,16 @@ public final class SurfaceId {
     public static void eachCommonPrefix(String text, int start, WordDic.Callback fn) {
         int node = 0;
         int id = idOffset;
-        
+
+        CodeStream in = new CodeStream(text,start);
         for(int i=start;; i++) {
             if(isTerminal(node))
-                WordDic.eachViterbiNode(fn, id++, start, i-start, false);
+                WordDic.eachViterbiNode(fn, id++, start, in.position(), false);
             
-            if(i==text.length())
+            if(in.isEos())
                 return;
             
-            final char arc = text.charAt(i); //Char.code(text.charAt(i));
+            final char arc = in.read();
             final int next = base(node)+arc;
             if(chck(next) != arc)
                 return;

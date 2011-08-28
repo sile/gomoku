@@ -1,7 +1,7 @@
 package net.reduls.gomoku.dic;
 
 public final class CodeStream {
-    public CodeStream(CharSequence str) {
+    public CodeStream(CharSequence str, int start) {
         
     }
 
