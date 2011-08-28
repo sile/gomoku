@@ -12,6 +12,8 @@ public final class SurfaceId {
             DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin");
             
             final int nodeCount = Misc.readInt(in);
+            final int extCount = Misc.readInt(in);  // XXX: unused
+            
             nodes = new long[nodeCount];
             for(int i=0; i < nodeCount; i++)
                 nodes[i] = Misc.readLong(in);
@@ -35,7 +37,7 @@ public final class SurfaceId {
             if(i==text.length())
                 return;
             
-            final char arc = Char.code(text.charAt(i));
+            final char arc = text.charAt(i); //Char.code(text.charAt(i));
             final int next = base(node)+arc;
             if(chck(next) != arc)
                 return;
