@@ -1,17 +1,15 @@
 package net.reduls.gomoku.dic;
 
-import java.util.List;
-
 public final class Unknown {
     private static final Char.Category space = Char.category(' ');
-    
+
     public static void search(String text, int start, WordDic.Callback fn) {
         final char ch = text.charAt(start);
         final Char.Category ct = Char.category(ch);
-        
+
         if(fn.isEmpty()==false && ct.invoke==false)
             return;
-        
+
         final boolean isSpace = ct==space;
         final int limit = Math.min(text.length(), ct.length+start);
         int i=start;
