@@ -139,7 +139,8 @@
                morps)
       (with-open-file (out morp.bin :direction :output :if-exists :supersede
                                     :element-type 'octet)
-        (write-int (length ms) out :width 4)
+        
+        (write-int (loop FOR vs ACROSS ms SUM (length vs)) out :width 4)
         (loop FOR vs ACROSS ms
           DO
           (loop FOR (pos-id cost) IN vs
