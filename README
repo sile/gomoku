@@ -3,7 +3,7 @@
 
 
 [バージョン]
-・0.0.4
+・0.0.5
 
 
 [概要]
@@ -23,14 +23,14 @@
 = ビルド方法
  $ cd analyzer
  $ ant
- $ ls gomoku-0.0.1.jar
+ $ ls gomoku-x.x.x.jar
 
 = 形態素解析コマンド
  # 形態素解析
- $ java -cp gomoku-0.0.1.jar net.reduls.gomoku.bin.Gomoku < 解析対象テキスト
+ $ java -cp gomoku-x.x.x.jar net.reduls.gomoku.bin.Gomoku < 解析対象テキスト
 
  # 分かち書き
- $ java -cp gomoku-0.0.1.jar net.reduls.gomoku.bin.Gomoku -wakati < 解析対象テキスト
+ $ java -cp gomoku-x.x.x.jar net.reduls.gomoku.bin.Gomoku -wakati < 解析対象テキスト
 
 = java API
 package net.reduls.gomoku;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="gomoku" default="jar"  basedir=".">
-  <property name="version" value="0.0.4" />
+  <property name="version" value="0.0.5" />
   <property name="src.dir" value="src"/>
   <property name="classes.dir" value="classes"/>
   <property name="javadoc.dir" value="docs"/>
@@ -16,7 +16,9 @@
 
   <target name="compile">
     <mkdir dir="${classes.dir}" />
-    <javac debug="off" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}" />
+    <javac debug="off" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}">
+      <compilerarg value="-Xlint:unchecked" />
+    </javac>
     <copy todir="${classes.dir}/net/reduls/gomoku/dicdata">
       <fileset dir="${src.dir}/net/reduls/gomoku/dicdata">
         <include name="*.bin" />
