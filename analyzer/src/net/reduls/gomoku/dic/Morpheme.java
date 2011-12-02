@@ -4,17 +4,7 @@ import java.io.DataInputStream;
 import net.reduls.gomoku.util.Misc;
 
 public final class Morpheme {
-    public static final class Info {
-        public final short cost;
-        public final short posId;
-
-        public Info(short posId, short cost) {
-            this.cost = cost;
-            this.posId = posId;
-        }
-    }
-
-    private static final Info[][] surId_to_morps;
+    private static final int[][] surId_to_morps;
     
     static {
         DataInputStream in1 = Misc.openDictionaryDataAsDIS("id-morphemes-map.bin");
@@ -22,13 +12,13 @@ public final class Morpheme {
 
         final int surfaceIdLimit = Misc.readInt(in1);
         final int morphemeCount = Misc.readInt(in2);
-        surId_to_morps = new Info[surfaceIdLimit][];
+        surId_to_morps = new int[surfaceIdLimit][];
 
         for(int i=0; i < surfaceIdLimit; i++) {
             final byte length = Misc.readByte(in1);
-            final Info[] morps = new Info[length];
+            final int[] morps = new int[length];
             for(int j=0; j < length; j++)
-                morps[j] = new Info(Misc.readShort(in2), Misc.readShort(in2));
+                morps[j] = encode_info(Misc.readShort(in2), Misc.readShort(in2));
             surId_to_morps[i] = morps;
         }
         
@@ -36,7 +26,19 @@ public final class Morpheme {
         Misc.close(in2);
     }
     
-    public static Info[] getMorphemes(int surfaceId) {
+    public static int[] getMorphemes(int surfaceId) {
         return surId_to_morps[surfaceId];
+    }
+
+    public static short posId(int info) {
+        return (short)(info>>16);
+    }
+
+    public static short cost(int info) {
+        return (short)(info&0xFFFF);
+    }
+
+    private static int encode_info(short posId, short cost) {
+        return (posId << 16) + (cost & 0xFFFF);
     }
 }
