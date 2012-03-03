@@ -105,7 +105,6 @@ public final class Tagger {
             final int end = i+vn.length;
             if(nodesAry[end]==null)
                 nodesAry[end] = new ViterbiNodeList();
-            ViterbiNodeList ends = nodesAry[end];
 
             if(vn.isSpace)
                 nodesAry[end].addAll(prevs);
