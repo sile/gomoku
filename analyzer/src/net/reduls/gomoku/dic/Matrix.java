@@ -11,7 +11,7 @@ public final class Matrix {
 
         final int leftNum = Misc.readInt(in);
         final int rightNum = Misc.readInt(in);
-        matrix = new short[leftNum][rightNum];
+        matrix = new short[rightNum][leftNum];
         
         for(int l=0; l < leftNum; l++) 
             for(int r=0; r < rightNum; r++)
